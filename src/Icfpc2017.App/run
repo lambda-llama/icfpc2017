@@ -1,0 +1,20 @@
+#! /bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+case $1 in
+    release) ;&
+    releas) ;&
+    relea) ;&
+    rele) ;&
+    rel) ;&
+    re) ;&
+    r)
+    CONFIG=Release
+    ;;
+    *)
+    CONFIG=Debug
+    ;;
+esac
+
+dotnet $SCRIPT_DIR/bin/$CONFIG/netcoreapp1.1/Icfpc2017.App.dll
