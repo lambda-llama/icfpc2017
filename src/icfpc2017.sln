@@ -2,9 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Icfpc2017.App", "Icfpc2017.App\Icfpc2017.App.fsproj", "{6CE884D3-EF04-4DFD-94F7-D49C3FCC5580}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Icfpc2017.App", "Icfpc2017.App/Icfpc2017.App.fsproj", "{6CE884D3-EF04-4DFD-94F7-D49C3FCC5580}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Icfpc2017.Tests", "Icfpc2017.Tests\Icfpc2017.Tests.fsproj", "{89B65EE9-E687-4097-84A3-55F59B3EBACA}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Icfpc2017.Tests", "Icfpc2017.Tests/Icfpc2017.Tests.fsproj", "{89B65EE9-E687-4097-84A3-55F59B3EBACA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
