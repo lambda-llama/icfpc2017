@@ -1,8 +1,8 @@
 module Stragy
 
-type T = Graph.T -> (Graph.VertexId * Graph.VertexId)
-
-let randomEdge: T = fun graph ->
-    let { Graph.Ends = ends } = graph.Edges |> List.find Graph.isUnclaimedEdge in
+type T = Game.State -> (Graph.VertexId * Graph.VertexId)
+            
+let randomEdge: T = fun game ->
+    let { Graph.Ends = ends } = game.Graph.Edges |> List.find Graph.isUnclaimedEdge in
     ends
 

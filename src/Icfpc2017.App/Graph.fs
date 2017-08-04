@@ -1,13 +1,13 @@
 module Graph
 
 type VertexId = uint32
-type Color = uint32 option
+type Color = uint32
 
 type Edge = {
     // Invariant: first vertex is smaller,
     // see `normalizeEdgeEnds`.
     Ends : VertexId * VertexId;
-    Color : Color;
+    Color : Color option;
 }
 
 type T = {
