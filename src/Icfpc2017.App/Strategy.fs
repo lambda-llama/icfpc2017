@@ -1,4 +1,4 @@
-module Stragy
+module Strategy
 
 type T = Game.State -> (Graph.VertexId * Graph.VertexId)
 
