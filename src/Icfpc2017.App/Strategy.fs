@@ -17,21 +17,21 @@ let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
     let sources = Graph.sources graph in
     let distances = ShortestPath.Compute graph sources in
     let isOurEdge {Graph.Color=cOpt} =
-        match cOpt with 
+        match cOpt with
         | Some c -> c = me
         | None -> false
-    in        
+    in
 
     let attachedToMine edge = Seq.exists (Graph.isEndPoint edge) sources in
     let attachedToOurEdge v = Graph.outEdges graph v |> Seq.exists isOurEdge in
 
     let weight ({Graph.Ends = (u, v) } as edge) =
         let uIsOurs = attachedToOurEdge u in
-        let vIsOurs = attachedToOurEdge v in 
+        let vIsOurs = attachedToOurEdge v in
         if uIsOurs || vIsOurs
-        then 
+        then
             let next = if vIsOurs then u else v in
-            distances 
+            distances
             |> Map.toSeq
             |> Seq.map (fun (mine, ds) -> ds.[int next])
             |> Seq.min
@@ -39,7 +39,22 @@ let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
         else 0
     in
 
-    maxByWeight graph weight
+    if List.exists isOurEdge graph.Edges
+    then maxByWeight graph weight
+    else
+        let mine =
+            distances |> Map.toSeq
+            |> Seq.map (fun (mine, ds) ->
+                (mine, Array.fold (fun acc x -> acc + x*x) 0 ds))
+            |> Seq.maxBy (fun (_, distance) -> distance)
+            |> fst
+        in
+
+        let {Graph.Ends=ends} =
+            Graph.outEdges graph mine
+            (* TODO: pick the most remote one. *)
+            |> List.find (fun _ -> true)
+        in ends
 
 let all =
     [("randomEdge", randomEdge);
