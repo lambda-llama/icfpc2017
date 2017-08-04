@@ -21,6 +21,8 @@ let normalizeEdgeEnds (u, v) =
 
 let isUnclaimedEdge edge = Option.isNone edge.Color
 
+let isEndPoint { Ends = (u, v) } vertex = vertex = u || vertex = v
+
 
 let empty = {
     NVerts = 0u;
