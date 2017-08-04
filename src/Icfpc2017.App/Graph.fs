@@ -11,6 +11,7 @@ type Edge = {
 }
 
 type T = {
+    Sources : VertexId array;
     NVerts : VertexId;
     Edges : Edge list
 }
@@ -23,19 +24,22 @@ let isUnclaimedEdge edge = Option.isNone edge.Color
 
 let isEndPoint { Ends = (u, v) } vertex = vertex = u || vertex = v
 
+let isSource { Sources = sources } vertex = Array.contains vertex sources
+
 let outEdges (graph: T) (vertex: VertexId): Edge seq =
     graph.Edges
     |> List.toSeq
     |> Seq.filter (fun e -> isEndPoint e vertex)
 
 let empty = {
+    Sources = [||];
     NVerts = 0u;
     Edges = [];
 }
 
-let create verts edges =
+let create sources verts edges =
     let newEdge e = { Ends = normalizeEdgeEnds e; Color = None} in
-    { NVerts = verts; Edges = List.map newEdge edges; }
+    { Sources = sources; NVerts = verts; Edges = List.map newEdge edges; }
 
 let claimEdge graph color edge =
     let claimed = normalizeEdgeEnds edge in
@@ -44,7 +48,7 @@ let claimEdge graph color edge =
         then { Ends = ends; Color = Some color }
         else { Ends = ends; Color = c }
     in
-    { NVerts = graph.NVerts; Edges = List.map claim graph.Edges }
+    { graph with Edges = List.map claim graph.Edges }
 
 let private colors = [|
     "red"; "blue"; "pink"; "yellow"; "cyan"; "dimgrey"; "green"; "indigo"

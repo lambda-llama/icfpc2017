@@ -2,7 +2,6 @@ module Game
 
 type State = {
     Graph: Graph.T
-    Mines: Graph.VertexId list
     Me: Graph.Color
 }
 
@@ -18,10 +17,9 @@ let initialState (setup: ProtocolData.SetupIn ) =
         setup.map.rivers
             |> Array.toList
             |> List.map (fun site -> (uint32 site.source, uint32 site.target))
-    let mines = setup.map.mines |> Array.toList |> List.map uint32
+    let mines = setup.map.mines |> Array.map uint32
     in {
-        Graph = Graph.create (uint32 setup.map.sites.Length) edges;
-        Mines = mines;
+        Graph = Graph.create mines (uint32 setup.map.sites.Length) edges;
         Me = uint32 setup.punter;
     }
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =

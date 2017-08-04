@@ -13,7 +13,7 @@ let randomEdge: T = fun game ->
     ends
 
 let growFromMines (game: Game.State) =
-    let attachedToMine edge = List.exists (Graph.isEndPoint edge) game.Mines in
+    let attachedToMine edge = Array.exists (Graph.isEndPoint edge) game.Graph.Sources in
     let attachedToOurEdge { Graph.Ends = (u, v) } =
         Seq.append (Graph.outEdges game.Graph u) (Graph.outEdges game.Graph u)
         |> Seq.exists (fun {Graph.Color = c} ->
