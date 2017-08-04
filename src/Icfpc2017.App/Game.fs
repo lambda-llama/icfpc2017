@@ -29,3 +29,18 @@ let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
         | ProtocolData.Claim claim -> Some claim
         | ProtocolData.Pass _ -> None)
     |> applyClaims state
+
+
+type Renderer = {
+    directory: string;
+    mutable count: int;
+}  with
+    static member create directory =
+        System.IO.Directory.CreateDirectory directory |> ignore
+        { directory = directory; count = 0 }
+    member this.dump (game: State) =
+        let dot = sprintf "%s/%d.dot" this.directory this.count in
+        let png = sprintf "%s/_%d.png" this.directory this.count in
+        System.IO.File.WriteAllText(dot, (Graph.toDot game.Graph))
+        use p = System.Diagnostics.Process.Start("dot", sprintf "-Tpng %s -o %s" dot png)
+        this.count <- this.count + 1

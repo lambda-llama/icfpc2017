@@ -14,12 +14,14 @@ let handshake (p: Pipe.T): Async<ProtocolData.SetupIn> = async {
 }
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
+    let rend = Game.Renderer.create "game"
     let rec go currState =
         async {
             let! message = Pipe.read p in
             match message with
             | ProtocolData.RequestMove moves ->
               let nextState = Game.applyMoveIn currState moves
+              rend.dump nextState
               let (source, target) = strategy nextState
               let nextMove = ProtocolData.Claim {
                   punter=punter; 
