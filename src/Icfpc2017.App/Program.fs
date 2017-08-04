@@ -14,12 +14,14 @@ let handshake (p: Pipe.T): Async<ProtocolData.SetupIn> = async {
 }
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
+    let rend = Game.Renderer.create "game"
     let rec go currState =
         async {
             let! message = Pipe.read p in
             match message with
             | ProtocolData.RequestMove moves ->
               let nextState = Game.applyMoveIn currState moves
+              rend.dump nextState
               let (source, target) = strategy nextState
               let nextMove = ProtocolData.Claim {
                   punter=punter; 
@@ -33,16 +35,19 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         }
     in go
 
-let online port () = async {
+let online port strategy = async {
     let! p = Pipe.connect port
     let! setup = handshake p
     let initialState = Game.initialState setup
-    let! () = play p setup.punter (Strategy.growFromMines) initialState
-    return ()
+    return! play p setup.punter strategy initialState
 }
 
 [<EntryPoint>]
 let main = function
-| [|port|] ->
-  Async.RunSynchronously (online (int port) ()); 0
-| _ -> failwith "usage: %prog% PORT"
+| [|port; strategyName|] when Map.containsKey strategyName Strategy.all ->
+  let strategy = Strategy.all.[strategyName] in
+  Async.RunSynchronously (online (int port) strategy); 0
+| _ -> 
+  Strategy.all |> Map.toSeq |> Seq.map fst 
+    |> String.concat "|"
+    |> failwithf "usage: %%prog%% PORT %s"

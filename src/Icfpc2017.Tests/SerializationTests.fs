@@ -29,14 +29,14 @@ module SerializationTests =
                     you = "llama"
                 }))
         Assert.That(
-            deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [{""id"": 0}, {""id"": 1}], ""rivers"": [{""source"": 0, ""target"": 1}], ""mines"": [0, 1]}}",
+            deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [{""id"": 0}, {""id"": 1, ""x"": -1.5, ""y"": 0.5}], ""rivers"": [{""source"": 0, ""target"": 1}], ""mines"": [0, 1]}}",
             Is.EqualTo(
                 Setup {
                     punter = 0
                     punters = 1
                     map =
                         {
-                            sites = [| { id = 0 }; { id = 1 } |]
+                            sites = [| { id = 0; coords = None }; { id = 1; coords = Some ({ x = -1.5; y = 0.5 }) } |]
                             rivers = [| { source = 0; target = 1 } |]
                             mines = [| 0; 1 |]
                         }

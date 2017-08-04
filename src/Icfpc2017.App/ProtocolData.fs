@@ -16,8 +16,14 @@ type HandshakeIn = {
 
 // 1. Setup
 
+type Coords = {
+    x : float
+    y : float
+}
+
 type Site = {
     id : int
+    coords : Coords option
 }
 
 type River = {
@@ -148,9 +154,20 @@ let deserializeHandshakeIn (o : JObject) : HandshakeIn =
         you = o.["you"].ToObject<string>()
     }
 
+let deserializeCoords (o : JObject) : Coords option =
+    match o.["x"] with
+    | null -> None
+    | _ ->
+        Some (
+            {
+                x = o.["x"].ToObject<float>()
+                y = o.["y"].ToObject<float>()                
+            })
+
 let deserializeSite (o : JObject) : Site =
     {
         id = o.["id"].ToObject<int>()
+        coords = o |> deserializeCoords
     }
 
 let deserializeRiver (o : JObject) : River =

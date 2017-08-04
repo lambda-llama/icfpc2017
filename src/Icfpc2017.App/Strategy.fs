@@ -8,11 +8,12 @@ let private maxByWeight (game: Game.State) (weight: Graph.Edge -> int) =
             |> List.filter Graph.isUnclaimedEdge
             |> List.maxBy weight
     in ends
+
 let randomEdge: T = fun game ->
     let { Graph.Ends = ends } = game.Graph.Edges |> List.find Graph.isUnclaimedEdge in
     ends
 
-let growFromMines (game: Game.State) =
+let growFromMines: T = fun game ->
     let attachedToMine edge = Array.exists (Graph.isEndPoint edge) game.Graph.Sources in
     let attachedToOurEdge { Graph.Ends = (u, v) } =
         Seq.append (Graph.outEdges game.Graph u) (Graph.outEdges game.Graph u)
@@ -24,3 +25,8 @@ let growFromMines (game: Game.State) =
     in
     let weight edge = if attachedToMine edge || attachedToOurEdge edge then 1 else 0 in
     maxByWeight game weight
+
+let all = 
+    [("randomEdge", randomEdge); 
+     ("growFromMines", growFromMines)]
+    |> Map.ofList 
