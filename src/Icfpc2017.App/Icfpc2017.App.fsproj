@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ProtocolData.fs" />
     <Compile Include="Graph.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="Llama.fs" />
@@ -15,6 +16,7 @@
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="4.1.*" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
   </ItemGroup>
 
 </Project>
