@@ -12,11 +12,11 @@ let private applyClaim state (claim: ProtocolData.Claim) = {
 let private applyClaims state claims = List.fold applyClaim state claims
 
 let initialState (setup: ProtocolData.SetupIn ) =
-    let verts = 
+    let verts =
         setup.map.sites
-        |> Array.map (fun {id = id; coords = coords} -> 
-            { Graph.Id = uint32 id; 
-              Graph.IsSource = Array.contains id setup.map.mines; 
+        |> Array.map (fun {id = id; coords = coords} ->
+            { Graph.Id = uint32 id;
+              Graph.IsSource = Array.contains id setup.map.mines;
               Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords; })
     let edges =
         setup.map.rivers
@@ -33,6 +33,17 @@ let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
         | ProtocolData.Claim claim -> Some claim
         | ProtocolData.Pass _ -> None)
     |> applyClaims state
+
+let score game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, int[]>) =
+    let isSource { Graph.IsSource = s } = s in
+    let (sources, sinks) = Array.partition isSource game.Graph.Verts in
+    let mutable total = 0;
+    for u in sources do
+        for v in sinks do
+            let d = dist.[u.Id].[int v.Id] in
+            if reach.[u.Id].[int v.Id] <> -1 then total <- total + d * d
+    total
+
 
 
 type Renderer = {

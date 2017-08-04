@@ -56,7 +56,25 @@ let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
             |> List.find (fun _ -> true)
         in ends
 
+let bruteForceOneStep: T = fun game ->
+    let graph = game.Graph
+    let me = game.Me
+    let isOurEdge {Graph.Color=cOpt} =
+        match cOpt with
+        | Some c -> c = me
+        | None -> false
+    in
+    let dists = ShortestPath.Compute graph (Graph.sources graph) in
+    let weight (edge: Graph.Edge) =
+        let graph = Graph.claimEdge graph me edge.Ends in
+        let reach = ShortestPath.Compute {graph with Graph.Edges = List.filter isOurEdge graph.Edges} (Graph.sources graph) in
+        let s = Game.score {game with Game.Graph = graph } dists reach in
+        s
+    in
+    maxByWeight graph weight
+
 let all =
     [("randomEdge", randomEdge);
-     ("growFromMines", growFromMines)]
+     ("growFromMines", growFromMines);
+     ("bruteForceOneStep", bruteForceOneStep)]
     |> Map.ofList
