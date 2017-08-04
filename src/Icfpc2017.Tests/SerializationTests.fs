@@ -11,11 +11,14 @@ module SerializationTests =
             serialize (Handshake { me = "llama" }),
             Is.EqualTo(@"{""me"":""llama""}"))
         Assert.That(
+            serialize (Ready { ready = 0 }),
+            Is.EqualTo(@"{""ready"":0}"))
+        Assert.That(
             serialize (Move (Claim { punter = 0; source = 0; target = 1 })),
-            Is.EqualTo(@"{""punter"":0,""source"":0,""target"":1}"))
+            Is.EqualTo(@"{""claim"":{""punter"":0,""source"":0,""target"":1}}"))
         Assert.That(
             serialize (Move (Pass { punter = 0 })),
-            Is.EqualTo(@"{""punter"":0}"))
+            Is.EqualTo(@"{""pass"":{""punter"":0}}"))
 
     [<Test>]
     let test_deserialize () : unit =

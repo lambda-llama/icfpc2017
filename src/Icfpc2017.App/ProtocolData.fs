@@ -98,24 +98,30 @@ type MessageIn =
 
 type MessageOut =
     | Handshake of HandshakeOut
+    | Ready of SetupOut
     | Move of MoveOut
 
 let serializeHandshakeOut (h : HandshakeOut) : JObject =
     JObject(
-        JProperty("me", h.me)
-    )
+        JProperty("me", h.me))
+
+let serializeSetupOut (s : SetupOut) : JObject =
+    JObject(
+        JProperty("ready" , s.ready))
 
 let serializeClaim (c : Claim) : JObject =
     JObject(
-        JProperty("punter", c.punter),
-        JProperty("source", c.source),
-        JProperty("target", c.target)
-    )
+        JProperty("claim",        
+            JObject(
+                JProperty("punter", c.punter),
+                JProperty("source", c.source),
+                JProperty("target", c.target))))
 
 let serializePass (p : Pass) : JObject =
     JObject(
-        JProperty("punter", p.punter)
-    )
+        JProperty("pass",
+            JObject(
+                JProperty("punter", p.punter))))
 
 let serializeMoveOut (m : MoveOut) : JObject =
     match m with
@@ -125,6 +131,7 @@ let serializeMoveOut (m : MoveOut) : JObject =
 let serializeMessageOut (m : MessageOut) : JObject =
     match m with
     | Handshake handshakeOut -> serializeHandshakeOut handshakeOut
+    | Ready setupOut -> serializeSetupOut setupOut
     | Move moveOut -> serializeMoveOut moveOut
 
 let serialize (m : MessageOut) : string =
