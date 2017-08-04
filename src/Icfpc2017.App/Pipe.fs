@@ -8,6 +8,8 @@ type T = private {
     Stream: NetworkStream
 }
 
+let debug = ref true
+
 let connect (port: int32): Async<T> =
     let client = new TcpClient () in
     async {
@@ -29,7 +31,10 @@ let read (p: T): Async<ProtocolData.MessageIn> =
     and readMessage (ob : byte array) offset =
         async {
             if offset = ob.Length
-            then return ProtocolData.deserialize(Encoding.ASCII.GetString ob)
+            then
+                let message = ProtocolData.deserialize(Encoding.ASCII.GetString ob)
+                if !debug then printf "<<< %A\n" message
+                return message
             else
                 let! read =
                     p.Stream.ReadAsync(ob, offset, ob.Length - offset)
@@ -41,7 +46,9 @@ let read (p: T): Async<ProtocolData.MessageIn> =
 let _write (stream: NetworkStream) (b: byte array) =
     stream.WriteAsync(b, 0, b.Length) |> Async.AwaitTask
 
-let write (p: T) (input: string): Async<unit> = async {
+let write (p: T) (message: ProtocolData.MessageOut): Async<unit> = async {
+    if !debug then printf ">>> %A\n" message
+    let input = ProtocolData.serialize message
     let ib = Encoding.ASCII.GetBytes input
     let! _ = sprintf "%d:" ib.Length
             |> Encoding.ASCII.GetBytes
