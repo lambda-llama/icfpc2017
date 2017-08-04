@@ -72,7 +72,7 @@ let toDot we graph =
         let position = 
             match coords with
             | None -> ""
-            | Some((x, y)) -> sprintf ", pos=\"%f,%f!\"" x y
+            | Some((x, y)) -> sprintf ", pos=\"%f,%f!\"" x (-y)
         in
         sprintf "  %d [label=\"%d\", shape=\"%s\"%s];" id id shape position
     in
