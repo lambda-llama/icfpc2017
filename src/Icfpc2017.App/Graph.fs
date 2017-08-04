@@ -23,9 +23,10 @@ let isUnclaimedEdge edge = Option.isNone edge.Color
 
 let isEndPoint { Ends = (u, v) } vertex = vertex = u || vertex = v
 
-let outEdges graph vertex =
+let outEdges (graph: T) (vertex: VertexId): Edge seq =
     graph.Edges
-    |> List.filter (fun e -> isEndPoint e vertex)
+    |> List.toSeq
+    |> Seq.filter (fun e -> isEndPoint e vertex)
 
 let empty = {
     NVerts = 0u;

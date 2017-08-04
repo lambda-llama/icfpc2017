@@ -15,8 +15,8 @@ let randomEdge: T = fun game ->
 let growFromMines (game: Game.State) =
     let attachedToMine edge = List.exists (Graph.isEndPoint edge) game.Mines in
     let attachedToOurEdge { Graph.Ends = (u, v) } =
-        List.append (Graph.outEdges game.Graph u) (Graph.outEdges game.Graph u)
-        |> List.exists (fun {Graph.Color = c} ->
+        Seq.append (Graph.outEdges game.Graph u) (Graph.outEdges game.Graph u)
+        |> Seq.exists (fun {Graph.Color = c} ->
             match c with
             | Some(c) -> c = game.Me
             | _ -> false
