@@ -4,7 +4,7 @@ type VertexId = uint32
 type Color = uint32 option
 
 type Edge = {
-    // Invariant: first vertex is sorted,
+    // Invariant: first vertex is smaller,
     // see `normalizeEdgeEnds`.
     Ends : VertexId * VertexId;
     Color : Color;
