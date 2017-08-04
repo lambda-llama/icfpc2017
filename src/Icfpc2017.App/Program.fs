@@ -2,8 +2,8 @@
 
 let handshake (p: Pipe.T): Async<ProtocolData.SetupIn> = async {
     printf "Performing handshake... "
-    let! _ = Pipe.write p "{\"me\":\"lambda-llama\"}" ()
-    let! (ProtocolData.HandshakeAck h) = Pipe.read p ()
+    let! _ = Pipe.write p "{\"me\":\"lambda-llama\"}"
+    let! (ProtocolData.HandshakeAck h) = Pipe.read p
     if h.you <> "lambda-llama"
     then return (failwithf "Unexpected response: %A\n" h)
     else
@@ -18,7 +18,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         async {
             let! message = Pipe.read p in
             match message with
-            | ProtocolData.Move moves ->
+            | ProtocolData.RequestMove moves ->
               let nextState = Game.applyMoveIn currState moves
               let (source, target) = strategy nextState
               let nextMove = (sprintf
@@ -35,7 +35,7 @@ let online port () = async {
     let! p = Pipe.connect port
     let! setup = handshake p
     let initialState = Game.initialState setup
-    printf "Showtime with punter %d\n!" setup.punter
+    printf "Showtime with punter %d!\n" setup.punter
     let! () = play p setup.punter (Strategy.growFromMines) initialState
     return ()
 }
