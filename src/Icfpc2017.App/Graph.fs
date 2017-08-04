@@ -4,9 +4,11 @@ type VertexId = uint32
 type Color = uint32 option
 
 type Edge = {
-    ends : VertexId * VertexId;
-    color : Color;
+    Ends : VertexId * VertexId;
+    Color : Color;
 }
+
+let isUnclaimedEdge edge = Option.isNone edge.Color
 
 
 type T = {
@@ -18,3 +20,4 @@ let empty = {
     NVerts = 0u;
     Edges = [];
 }
+
