@@ -12,7 +12,7 @@ type Edge = {
 
 type T = {
     Sources : VertexId array;
-    NVerts : VertexId;
+    NVerts : uint32;
     Edges : Edge list
 }
 
@@ -26,10 +26,9 @@ let isEndPoint { Ends = (u, v) } vertex = vertex = u || vertex = v
 
 let isSource { Sources = sources } vertex = Array.contains vertex sources
 
-let outEdges (graph: T) (vertex: VertexId): Edge seq =
+let outEdges (graph: T) (vertex: VertexId): Edge list =
     graph.Edges
-    |> List.toSeq
-    |> Seq.filter (fun e -> isEndPoint e vertex)
+    |> List.filter (fun e -> isEndPoint e vertex)
 
 let empty = {
     Sources = [||];
