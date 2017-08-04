@@ -38,6 +38,12 @@ let outEdges (graph: T) (vertex: VertexId): Edge list =
     graph.Edges
     |> List.filter (fun e -> isEndPoint e vertex)
 
+let sources (graph: T): VertexId array =
+    graph.Verts |> Array.toSeq 
+        |> Seq.filter (fun {IsSource=isSource} -> isSource)
+        |> Seq.map (fun {Id=id} -> id)
+        |> Array.ofSeq
+
 let verticies (graph: T): VertexId seq = 
     graph.Verts
     |> Array.toSeq

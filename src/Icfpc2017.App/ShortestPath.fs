@@ -23,7 +23,8 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[,]) =
                 end
             end
 
-let Compute (graph: Graph.T) (mines: Graph.VertexId list)= 
-    let res = Array2D.init mines.Length graph.Verts.Length (fun a b -> -1) in
-    for mine in mines do
-        BFS graph mine res
+let Compute (graph: Graph.T) (sources: Graph.VertexId array) = 
+    let res = Array2D.create sources.Length graph.Verts.Length -1 in
+    for source in sources do
+        BFS graph source res
+    res

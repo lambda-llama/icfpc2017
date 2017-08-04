@@ -14,7 +14,10 @@ let randomEdge: T = fun game ->
     ends
 
 let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
-    let attachedToMine edge = Seq.exists (Graph.isEndPoint edge) (Graph.verticies graph) in
+    let sources = Graph.sources graph in
+    let ds = ShortestPath.Compute graph sources in
+
+    let attachedToMine edge = Seq.exists (Graph.isEndPoint edge) sources in
     let attachedToOurEdge { Graph.Ends = (u, v) } =
         Seq.append (Graph.outEdges graph u) (Graph.outEdges graph v)
         |> Seq.exists (fun {Graph.Color = c} ->
@@ -23,8 +26,15 @@ let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
             | _ -> false
         )
     in
-    let weight edge = if attachedToOurEdge edge || attachedToMine edge then 1 else 0 in
-    maxByWeight graph weight
+    let weight (ds: int[,]) ({Graph.Ends = (u, v) } as edge) = 
+        if attachedToOurEdge edge || attachedToMine edge 
+        then {0..Array2D.length1 ds}
+            |> Seq.map (fun mine -> min ds.[mine, int u] ds.[mine, int v])
+            |> Seq.min
+        else 0 
+    in 
+        
+    maxByWeight graph (weight ds)
 
 let all = 
     [("randomEdge", randomEdge); 
