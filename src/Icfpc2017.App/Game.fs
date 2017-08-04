@@ -45,6 +45,6 @@ type Renderer = {
     member this.dump (game: State) =
         let dot = sprintf "%s/%d.dot" this.directory this.count in
         let png = sprintf "%s/_%d.png" this.directory this.count in
-        System.IO.File.WriteAllText(dot, (Graph.toDot game.Graph))
+        System.IO.File.WriteAllText(dot, (Graph.toDot game.Me game.Graph))
         use p = System.Diagnostics.Process.Start("dot", sprintf "-Kfdp -n -Tpng %s -o %s" dot png)
         this.count <- this.count + 1

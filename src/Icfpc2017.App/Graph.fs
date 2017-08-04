@@ -57,10 +57,10 @@ let claimEdge graph color edge =
     { graph with Edges = List.map claim graph.Edges }
 
 let private colors = [|
-    "red"; "blue"; "pink"; "yellow"; "cyan"; "dimgrey"; "green"; "indigo"
+    "blue"; "pink"; "yellow"; "cyan"; "dimgrey"; "green"; "indigo"; "margenta"
 |]
 
-let toDot graph =
+let toDot we graph =
     let renderVertex {Id = id; IsSource = isSource; Coords = coords } =
         let shape = if isSource then "square" else "circle" in
         let position = 
@@ -73,6 +73,7 @@ let toDot graph =
     let renderEdge { Ends = (u, v); Color = c} =
         let color: string =
             match c with
+            | Some(idx) when idx = we -> "red"
             | Some(idx) -> Array.get colors (int idx)
             | None -> "black"
         in sprintf "  %d -- %d [color=\"%s\"];" u v color
