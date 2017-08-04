@@ -8,7 +8,7 @@ type T = private {
     Stream: NetworkStream
 }
 
-let connect (port: int32) (): Async<T> =
+let connect (port: int32): Async<T> =
     let client = new TcpClient () in
     async {
         printf "Connecting on port %i... " port
@@ -19,7 +19,7 @@ let connect (port: int32) (): Async<T> =
         return {Stream=client.GetStream ()}
     }
 
-let read (p: T) (): Async<ProtocolData.MessageIn> =
+let read (p: T): Async<ProtocolData.MessageIn> =
     let rec readLength (sb: StringBuilder) =
         match char (p.Stream.ReadByte ()) with
         | ':' -> int (sb.ToString ())
@@ -41,7 +41,7 @@ let read (p: T) (): Async<ProtocolData.MessageIn> =
 let _write (stream: NetworkStream) (b: byte array) =
     stream.WriteAsync(b, 0, b.Length) |> Async.AwaitTask
 
-let write (p: T) (input: string) (): Async<unit> = async {
+let write (p: T) (input: string): Async<unit> = async {
     let ib = Encoding.ASCII.GetBytes input
     let! _ = sprintf "%d:" ib.Length
             |> Encoding.ASCII.GetBytes
