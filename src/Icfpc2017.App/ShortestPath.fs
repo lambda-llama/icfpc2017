@@ -2,9 +2,9 @@ module ShortestPath
 
 open System.Collections.Generic
 
-let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[,]) =
-     let q = new Queue<Graph.VertexId * int>() in
-     distances.[int mine, int mine] <- 0;
+let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[]) =
+     let q = new Queue<Graph.VertexId * int>() in     
+     distances.[int mine] <- 0;
      q.Enqueue (mine, 0);
      while q.Count <> 0 do
         let (vertex, d) = q.Dequeue () in
@@ -16,15 +16,17 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[,]) =
                     if ver1 = vertex then ver2
                     else ver1 
                 in
-                if distances.[int mine, int nextVertex] = -1
+                if distances.[int nextVertex] = -1
                 then begin
-                    distances.[int mine, int nextVertex] <- d + 1;
+                    distances.[int nextVertex] <- d + 1;
                     q.Enqueue (nextVertex, d + 1) 
                 end
             end
 
 let Compute (graph: Graph.T) (sources: Graph.VertexId array) = 
-    let res = Array2D.create sources.Length graph.Verts.Length -1 in
-    for source in sources do
-        BFS graph source res
-    res
+    sources |> Array.toSeq
+        |> Seq.map (fun source ->
+            let distances = Array.create graph.Verts.Length -1 in
+            BFS graph source distances
+            (source, distances))
+        |> Map.ofSeq

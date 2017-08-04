@@ -15,28 +15,33 @@ let randomEdge: T = fun game ->
 
 let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
     let sources = Graph.sources graph in
-    let ds = ShortestPath.Compute graph sources in
+    let distances = ShortestPath.Compute graph sources in
+    let isOurEdge {Graph.Color=cOpt} =
+        match cOpt with 
+        | Some c -> c = me
+        | None -> false
+    in        
 
     let attachedToMine edge = Seq.exists (Graph.isEndPoint edge) sources in
-    let attachedToOurEdge { Graph.Ends = (u, v) } =
-        Seq.append (Graph.outEdges graph u) (Graph.outEdges graph v)
-        |> Seq.exists (fun {Graph.Color = c} ->
-            match c with
-            | Some(c) -> c = me
-            | _ -> false
-        )
-    in
-    let weight (ds: int[,]) ({Graph.Ends = (u, v) } as edge) = 
-        if attachedToOurEdge edge || attachedToMine edge 
-        then {0..Array2D.length1 ds}
-            |> Seq.map (fun mine -> min ds.[mine, int u] ds.[mine, int v])
-            |> Seq.min
-        else 0 
-    in 
-        
-    maxByWeight graph (weight ds)
+    let attachedToOurEdge v = Graph.outEdges graph v |> Seq.exists isOurEdge in
 
-let all = 
-    [("randomEdge", randomEdge); 
+    let weight ({Graph.Ends = (u, v) } as edge) =
+        let uIsOurs = attachedToOurEdge u in
+        let vIsOurs = attachedToOurEdge v in 
+        if uIsOurs || vIsOurs
+        then 
+            let next = if vIsOurs then u else v in
+            distances 
+            |> Map.toSeq
+            |> Seq.map (fun (mine, ds) -> ds.[int next])
+            |> Seq.min
+        else if attachedToMine edge then 1
+        else 0
+    in
+
+    maxByWeight graph weight
+
+let all =
+    [("randomEdge", randomEdge);
      ("growFromMines", growFromMines)]
-    |> Map.ofList 
+    |> Map.ofList
