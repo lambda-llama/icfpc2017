@@ -2,71 +2,88 @@ module ProtocolData
 
 // 0. Handshake
 
-type HandshakeOut =
-    val me : string
+type HandshakeOut = {
+    me : string
+}
 
-type HandshakeIn =
-    val out : string
+type HandshakeIn = {
+    you : string
+}
 
 // 1. Setup
 
-type Site =
-    val id : int
+type Site = {
+    id : int
+}
 
-type River =
-    val source : int
-    val target : int
+type River = {
+    source : int
+    target : int
+}
 
-type Map =
-    val sites : Site array
-    val rivers : River array
-    val mines : int array
+type Map = {
+    sites : Site array
+    rivers : River array
+    mines : int array
+}
 
-type SetupIn =
-    val punter : string
-    val punters : int
-    val map : Map
+type SetupIn = {
+    punter : int
+    punters : int
+    map : Map
+}
 
-type SetupOut =
-    val ready : string
+type SetupOut = {
+    ready : int
+}
 
 // 2. Gameplay
 
-type Claim =
-    val punter : string
-    val source : int
-    val target : int
+type Claim = {
+    punter : int
+    source : int
+    target : int
+}
 
-type Pass =
-    val punter : string
+type Pass = {
+    punter : int
+}
 
 type Move =
-    val claim : Claim
-    val pass : Pass
+    | Claim of claim : Claim
+    | Pass of pass : Pass
 
-type MoveIn =
-    val moves : Move array
+type Moves = {
+    moves : Move array
+}
 
-type MoveOut =
-    val move : Move
+type MoveIn = {
+    move : Moves
+}
+
+type MoveOut = Move
 
 // 3. Scoring
 
-type Score =
-    val punter : string
-    val score : int
+type Score = {
+    punter : int
+    score : int
+}
 
-type Stop =
-    val moves : Move array
-    val scores : Score array
+type Stop = {
+    moves : Move array
+    scores : Score array
+}
 
-type StopIn =
-    val stop : Stop
+type StopIn = {
+    stop : Stop
+}
 
 // Misc
 
-type TimeoutIn =
-    val timeout : int
+type TimeoutIn = {
+    timeout : int
+}
 
 type MessageIn =
     | Move of MoveIn
