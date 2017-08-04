@@ -3,10 +3,10 @@ module ShortestPath
 open System.Collections.Generic
 
 let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[,]) =
-     let q = new Queue<Graph.VertexId*int>() in
+     let q = new Queue<Graph.VertexId * int>() in
      q.Enqueue (mine, 0);
      while q.Count <> 0 do
-        let (vertex, d) = q.Dequeue() in
+        let (vertex, d) = q.Dequeue () in
         for edge in graph.Edges do
             let (ver1, ver2) = edge.Ends in
             if ver1 = vertex || ver2 = vertex 

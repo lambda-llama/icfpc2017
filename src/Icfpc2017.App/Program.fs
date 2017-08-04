@@ -35,16 +35,19 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         }
     in go
 
-let online port () = async {
+let online port strategy = async {
     let! p = Pipe.connect port
     let! setup = handshake p
     let initialState = Game.initialState setup
-    let! () = play p setup.punter (Strategy.growFromMines) initialState
-    return ()
+    return! play p setup.punter strategy initialState
 }
 
 [<EntryPoint>]
 let main = function
-| [|port|] ->
-  Async.RunSynchronously (online (int port) ()); 0
-| _ -> failwith "usage: %prog% PORT"
+| [|port; strategyName|] when Map.containsKey strategyName Strategy.all ->
+  let strategy = Strategy.all.[strategyName] in
+  Async.RunSynchronously (online (int port) strategy); 0
+| _ -> 
+  Strategy.all |> Map.toSeq |> Seq.map fst 
+    |> String.concat "|"
+    |> failwithf "usage: %%prog%% PORT %s"
