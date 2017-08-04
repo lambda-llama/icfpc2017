@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+      <Compile Include="UnionFind.fs" />
     <Compile Include="ProtocolData.fs" />
     <Compile Include="Graph.fs" />
     <Compile Include="ShortestPath.fs" />
