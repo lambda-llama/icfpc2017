@@ -2,5 +2,5 @@
 
 [<EntryPoint>]
 let main argv =
-    printfn "Llama says: %s" Llama.say
+    printfn "Llama says: %A" Graph.empty
     0
