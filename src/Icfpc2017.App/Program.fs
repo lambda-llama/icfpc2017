@@ -3,7 +3,7 @@
 let handshake (p: Pipe.T) (): Async<ProtocolData.SetupIn> = async {
     printf "Performing handshake... "
     let! _ = Pipe.write p "{\"me\":\"lambda-llama\"}" ()
-    let! (ProtocolData.Handshake h) = Pipe.read p ()
+    let! (ProtocolData.HandshakeAck h) = Pipe.read p ()
     if h.you <> "lambda-llama"
     then return (failwithf "Unexpected response: %A\n" h)
     else          

@@ -90,13 +90,45 @@ type TimeoutIn = {
 }
 
 type MessageIn =
-    | Handshake of HandshakeIn
+    | HandshakeAck of HandshakeIn
     | Setup of SetupIn
-    | Move of MoveIn
+    | RequestMove of MoveIn
     | Stop of StopIn
     | Timeout of TimeoutIn
 
-type MessageOut = MoveOut
+type MessageOut =
+    | Handshake of HandshakeOut
+    | Move of MoveOut
+
+let serializeHandshakeOut (h : HandshakeOut) : JObject =
+    JObject(
+        JProperty("me", h.me)
+    )
+
+let serializeClaim (c : Claim) : JObject =
+    JObject(
+        JProperty("punter", c.punter),
+        JProperty("source", c.source),
+        JProperty("target", c.target)
+    )
+
+let serializePass (p : Pass) : JObject =
+    JObject(
+        JProperty("punter", p.punter)
+    )
+
+let serializeMoveOut (m : MoveOut) : JObject =
+    match m with
+    | Claim claim -> serializeClaim claim
+    | Pass pass -> serializePass pass
+
+let serializeMessageOut (m : MessageOut) : JObject =
+    match m with
+    | Handshake handshakeOut -> serializeHandshakeOut handshakeOut
+    | Move moveOut -> serializeMoveOut moveOut
+
+let serialize (m : MessageOut) : string =
+    JsonConvert.SerializeObject(serializeMessageOut(m))
 
 let convertArray (arr : JToken) (doDeserialize : 'a -> 'b) : 'b array =
     (arr :?> JArray)
@@ -185,9 +217,9 @@ let deserializeTimeoutIn (o : JObject) : TimeoutIn =
 let deserializeMessageIn (o : JObject) : MessageIn =
     let prop = o.Properties().First()
     match (prop.Name) with
-    | "you" -> Handshake (deserializeHandshakeIn o)
+    | "you" -> HandshakeAck (deserializeHandshakeIn o)
     | "punter" -> Setup (deserializeSetupIn o)
-    | "move" -> Move (deserializeMoveIn o)
+    | "move" -> RequestMove (deserializeMoveIn o)
     | "stop" -> Stop (deserializeStopIn o)
     | "timeout" -> Timeout (deserializeTimeoutIn o)
     | x -> raise (exn x)

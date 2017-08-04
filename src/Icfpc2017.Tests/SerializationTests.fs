@@ -6,11 +6,23 @@ open ProtocolData
 [<TestFixture>]
 module SerializationTests =
     [<Test>]
-    let test_deserialize (): unit =
+    let test_serialize () : unit =
+        Assert.That(
+            serialize (Handshake { me = "llama" }),
+            Is.EqualTo(@"{""me"":""llama""}"))
+        Assert.That(
+            serialize (Move (Claim { punter = 0; source = 0; target = 1 })),
+            Is.EqualTo(@"{""punter"":0,""source"":0,""target"":1}"))
+        Assert.That(
+            serialize (Move (Pass { punter = 0 })),
+            Is.EqualTo(@"{""punter"":0}"))
+
+    [<Test>]
+    let test_deserialize () : unit =
         Assert.That(
             deserialize @"{""you"": ""llama""}",
             Is.EqualTo(
-                Handshake {
+                HandshakeAck {
                     you = "llama"
                 }))
         Assert.That(
@@ -29,7 +41,7 @@ module SerializationTests =
         Assert.That(
             deserialize @"{""move"": {""moves"":[{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}]}}",
             Is.EqualTo(
-                Move {
+                RequestMove {
                     move =
                         {
                             moves =
