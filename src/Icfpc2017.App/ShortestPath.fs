@@ -23,10 +23,10 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[]) =
                 end
             end
 
-let Compute (graph: Graph.T) (sources: Graph.VertexId array) = 
-    sources |> Array.toSeq
-        |> Seq.map (fun source ->
+let Compute (graph: Graph.T) = 
+    graph.Verts |> Array.filter (fun v -> v.IsSource)
+        |> Array.map (fun source ->
             let distances = Array.create graph.Verts.Length -1 in
-            BFS graph source distances
-            (source, distances))
-        |> Map.ofSeq
+            BFS graph source.Id distances
+            (int source.Id, distances))
+        |> Map.ofArray

@@ -15,7 +15,7 @@ let randomEdge: T = fun game ->
 
 let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
     let sources = Graph.sources graph in
-    let distances = ShortestPath.Compute graph sources in
+    let distances = ShortestPath.Compute graph in
     let isOurEdge {Graph.Color=cOpt} =
         match cOpt with
         | Some c -> c = me

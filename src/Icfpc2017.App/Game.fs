@@ -3,6 +3,8 @@ module Game
 type State = {
     Graph: Graph.T
     Me: Graph.Color
+    BFSDist: Map<int, int[]>
+    Union: FastUnion.T
 }
 
 let private applyClaim state (claim: ProtocolData.Claim) = {
@@ -22,9 +24,12 @@ let initialState (setup: ProtocolData.SetupIn ) =
         setup.map.rivers
             |> Array.toList
             |> List.map (fun site -> (uint32 site.source, uint32 site.target))
-    in {
-        Graph = Graph.create verts edges;
+    let G = Graph.create verts edges
+    {
+        Graph = G;
         Me = uint32 setup.punter;
+        BFSDist = ShortestPath.Compute G;
+        Union = FastUnion.T G;
     }
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
     moveIn.move.moves
