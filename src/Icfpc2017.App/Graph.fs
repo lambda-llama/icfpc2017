@@ -27,6 +27,10 @@ let empty = {
     Edges = [];
 }
 
+let create verts edges = 
+    let newEdge e = { Ends = normalizeEdgeEnds e; Color = None} in 
+    { NVerts = verts; Edges = List.map newEdge edges; }
+
 let claimEdge graph color edge = 
     let claimed = normalizeEdgeEnds edge in
     let claim { Ends = ends; Color = c} =
