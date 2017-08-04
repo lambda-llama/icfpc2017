@@ -36,7 +36,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
     in go
 
 let online port strategy = async {
-    let! p = Pipe.connect port
+    let! p = Pipe.connect "punter.inf.ed.ac.uk" port
     let! setup = handshake p
     let initialState = Game.initialState setup
     return! play p setup.punter strategy initialState
