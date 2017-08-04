@@ -39,3 +39,21 @@ let claimEdge graph color edge =
         else { Ends = ends; Color = c }
     in
     { NVerts = graph.NVerts; Edges = List.map claim graph.Edges }
+
+let private colors = [| 
+    "red"; "blue"; "pink"; "yellow"; "cyan"; "dimgrey"; "green"; "indigo" 
+|]
+
+let toDot graph = 
+    let renderNode id = sprintf "  %d [label=\"%d\"]" id id in 
+    let renderEdge { Ends = (u, v); Color = c} = 
+        let color: string = 
+            match c with 
+            | Some(idx) -> Array.get colors (int idx) 
+            | None -> "black" 
+        in sprintf "  %d -- %d [color=\"%s\"]" u v color
+    in
+    let mapJoin f xs = List.map f xs |> String.concat "\n" in 
+    let nodes = [0u .. (graph.NVerts - 1u)] |> mapJoin renderNode in
+    let edges = graph.Edges |> mapJoin renderEdge in 
+    sprintf "graph {\n%s\n%s\n}" nodes edges
