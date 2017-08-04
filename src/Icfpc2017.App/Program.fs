@@ -50,10 +50,10 @@ let clientStart host port strategyName =
 let main = function
 | [|"--server"; mapFilePath|] ->
     Server.start mapFilePath (7777); 0
-| [|port; strategyName|] when Map.containsKey strategyName Strategy.all ->
-    clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
 | [|"--local"; strategyName|] when Map.containsKey strategyName Strategy.all ->
     clientStart "localhost" 7777 strategyName; 0
+| [|port; strategyName|] when Map.containsKey strategyName Strategy.all ->
+    clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
 | _ -> 
     Strategy.all |> Map.toSeq |> Seq.map fst
         |> String.concat "|"
