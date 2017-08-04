@@ -13,12 +13,14 @@ let handshake (p: Pipe.T) () = async {
         return ()
 }
 
-let online () = async {
-    let! p = Pipe.connect 9018 ()
+let online port () = async {
+    let! p = Pipe.connect port ()
     let! _ = handshake p ()
     return ()
 }
 
 [<EntryPoint>]
-let main argv =
-    Async.RunSynchronously (online ()); 0
+let main = function
+| [|port|] -> 
+  Async.RunSynchronously (online (int port) ()); 0
+| _ -> failwith "usage: %prog% PORT"
