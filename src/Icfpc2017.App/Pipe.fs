@@ -21,6 +21,12 @@ let connect (host: string) (port: int32): Async<T> =
         return {Stream=client.GetStream ()}
     }
 
+let accept (server: TcpListener): Async<T> =
+    async {
+        let! sock = server.AcceptSocketAsync() |> Async.AwaitTask
+        return { Stream = new NetworkStream(sock, true) }
+    }
+
 let commonRead (p: T) (deserialize : string -> 'a): Async<'a> =
     let rec readLength (sb: StringBuilder) =
         match char (p.Stream.ReadByte ()) with

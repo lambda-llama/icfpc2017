@@ -35,19 +35,27 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         }
     in go
 
-let online port strategy = async {
-    let! p = Pipe.connect "punter.inf.ed.ac.uk" port
+let online host port strategy = async {
+    let! p = Pipe.connect host port
     let! setup = handshake p
     let initialState = Game.initialState setup
     return! play p setup.punter strategy initialState
 }
 
+let clientStart host port strategyName =
+    let strategy = Strategy.all.[strategyName] in
+    online host port strategy |> Async.RunSynchronously
+
 [<EntryPoint>]
 let main = function
+| [|"--server"; mapFilePath|] ->
+    Server.start mapFilePath (7777); 0
 | [|port; strategyName|] when Map.containsKey strategyName Strategy.all ->
-  let strategy = Strategy.all.[strategyName] in
-  Async.RunSynchronously (online (int port) strategy); 0
+    clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
+| [|"--local"; strategyName|] when Map.containsKey strategyName Strategy.all ->
+    clientStart "localhost" 7777 strategyName; 0
 | _ -> 
-  Strategy.all |> Map.toSeq |> Seq.map fst 
-    |> String.concat "|"
-    |> failwithf "usage: %%prog%% PORT %s"
+    Strategy.all |> Map.toSeq |> Seq.map fst
+        |> String.concat "|"
+        |> printf "usage:\n%%prog%% <--local|PORT> <%s>\n%%prog%% --server MAP"
+    1
