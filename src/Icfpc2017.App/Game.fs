@@ -51,8 +51,10 @@ type Renderer = {
     mutable count: int;
 }  with
     static member create directory =
-        System.IO.Directory.CreateDirectory directory |> ignore
-        { directory = directory; count = 0 }
+        let dir = sprintf "%s/%d" directory (System.Diagnostics.Process.GetCurrentProcess().Id)
+        System.IO.Directory.CreateDirectory dir |> ignore
+        { directory = dir; count = 0 }
+        
     member this.dump (game: State) =
         let dot = sprintf "%s/%d.dot" this.directory this.count in
         let png = sprintf "%s/_%d.png" this.directory this.count in
