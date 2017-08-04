@@ -55,7 +55,11 @@ let private colors = [|
 |]
 
 let toDot graph =
-    let renderNode id = sprintf "  %d [label=\"%d\"]" id id in
+    let renderNode id =
+        if isSource graph id
+        then sprintf "  %d [label=\"%d\"; shape = \"square\"]" id id
+        else sprintf "  %d [label=\"%d\"; shape = \"circle\"]" id id
+    in
     let renderEdge { Ends = (u, v); Color = c} =
         let color: string =
             match c with
