@@ -56,15 +56,15 @@ let private colors = [|
 let toDot graph =
     let renderNode id =
         if isSource graph id
-        then sprintf "  %d [label=\"%d\"; shape = \"square\"]" id id
-        else sprintf "  %d [label=\"%d\"; shape = \"circle\"]" id id
+        then sprintf "  %d [label=\"%d\", shape=\"square\"];" id id
+        else sprintf "  %d [label=\"%d\", shape=\"circle\"];" id id
     in
     let renderEdge { Ends = (u, v); Color = c} =
         let color: string =
             match c with
             | Some(idx) -> Array.get colors (int idx)
             | None -> "black"
-        in sprintf "  %d -- %d [color=\"%s\"]" u v color
+        in sprintf "  %d -- %d [color=\"%s\"];" u v color
     in
     let mapJoin f xs = List.map f xs |> String.concat "\n" in
     let nodes = [0u .. (graph.NVerts - 1u)] |> mapJoin renderNode in
