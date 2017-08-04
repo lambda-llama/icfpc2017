@@ -1,21 +1,21 @@
 ﻿open System
 
-let handshake (p: Pipe.T) () = async {
+let handshake (p: Pipe.T) (): Async<ProtocolData.SetupIn> = async {
     printf "Performing handshake... "
     let! _ = Pipe.write p "{\"me\":\"lambda-llama\"}" ()
-    let! you = Pipe.read p ()
-    if you <> "{\"you\":\"lambda-llama\"}" 
-    then failwithf "Unexpected response: %s\n" you
+    let! (ProtocolData.Handshake h) = Pipe.read p ()
+    if h.you <> "lambda-llama"
+    then return (failwithf "Unexpected response: %A\n" h)
     else          
         printf "OK!\n"
-        let! map = Pipe.read p ()
-        printf "<<< %s\n" map
-        return ()
+        let! (ProtocolData.Setup map) = Pipe.read p ()
+        return map
 }
 
 let online port () = async {
     let! p = Pipe.connect port ()
-    let! _ = handshake p ()
+    let! setup = handshake p ()
+    printf "Setup: %A\n" setup
     return ()
 }
 
