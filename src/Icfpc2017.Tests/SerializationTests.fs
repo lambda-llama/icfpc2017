@@ -21,6 +21,86 @@ module SerializationTests =
             Is.EqualTo(@"{""pass"":{""punter"":0}}"))
 
     [<Test>]
+    let test_serverDeserialize () : unit =
+        Assert.That(
+            serverDeserialize @"{""me"":""llama""}",
+            Is.EqualTo(
+                Handshake {
+                    me = "llama"
+                }))
+        Assert.That(
+            serverDeserialize @"{""ready"":0}",
+            Is.EqualTo(
+                Ready {
+                    ready = 0
+                }))
+        Assert.That(
+            serverDeserialize @"{""claim"":{""punter"":0,""source"":0,""target"":1}}",
+            Is.EqualTo(
+                Move (Claim { punter = 0; source = 0; target = 1 })))
+        Assert.That(
+            serverDeserialize @"{""pass"":{""punter"":0}}",
+            Is.EqualTo(Move (Pass { punter = 0 })))
+
+    [<Test>]
+    let test_serverSerialize () : unit =
+        Assert.That(
+            serverSerialize (
+                HandshakeAck {
+                    you = "llama"
+                }),
+            Is.EqualTo(@"{""you"":""llama""}"))
+        Assert.That(
+            serverSerialize (
+                Setup {
+                    punter = 0
+                    punters = 1
+                    map =
+                        {
+                            sites = [| { id = 0; coords = None }; { id = 1; coords = Some ({ x = -1.5; y = 0.5 }) } |]
+                            rivers = [| { source = 0; target = 1 } |]
+                            mines = [| 0; 1 |]
+                        }
+                }),
+            Is.EqualTo(@"{""punter"":0,""punters"":1,""map"":{""sites"":[{""id"":0},{""id"":1,""x"":-1.5,""y"":0.5}],""rivers"":[{""source"":0,""target"":1}],""mines"":[0,1]}}"))
+        Assert.That(
+            serverSerialize (
+                RequestMove {
+                    move =
+                        {
+                            moves =
+                                [|
+                                    Claim { punter = 0; source = 0; target = 0 }
+                                    Pass { punter = 0 }
+                                |]
+                        }
+                    }),
+            Is.EqualTo(@"{""move"":{""moves"":[{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}]}}"))
+        Assert.That(
+            serverSerialize (
+                Stop {
+                    stop =
+                        {
+                            moves =
+                                [|
+                                    Claim { punter = 0; source = 0; target = 0 }
+                                    Pass { punter = 0 }
+                                |]
+                            scores =
+                                [|
+                                    { punter = 0; score = 42 }
+                                |]
+                        }
+                    }),
+            Is.EqualTo(@"{""stop"":{""moves"":[{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}],""scores"":[{""punter"":0,""score"":42}]}}"))
+        Assert.That(
+            serverSerialize (
+                Timeout {
+                    timeout = 42
+                }),
+            Is.EqualTo(@"{""timeout"":42}"))
+
+    [<Test>]
     let test_deserialize () : unit =
         Assert.That(
             deserialize @"{""you"": ""llama""}",
