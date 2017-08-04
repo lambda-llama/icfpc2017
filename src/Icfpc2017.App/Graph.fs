@@ -10,9 +10,14 @@ type Edge = {
     Color : Color option;
 }
 
+type Vertex = {
+    Id: VertexId;
+    IsSource: bool;
+    Coords: (float * float) option
+}
+
 type T = {
-    Sources : VertexId array;
-    NVerts : uint32;
+    Verts : Vertex array
     Edges : Edge list
 }
 
@@ -24,21 +29,23 @@ let isUnclaimedEdge edge = Option.isNone edge.Color
 
 let isEndPoint { Ends = (u, v) } vertex = vertex = u || vertex = v
 
-let isSource { Sources = sources } vertex = Array.contains vertex sources
+let isSource { Verts = verts } vertex = 
+    verts
+    |> Array.tryFind (fun { Id = id; IsSource = isSource } -> id = vertex && isSource)
+    |> Option.isSome
 
 let outEdges (graph: T) (vertex: VertexId): Edge list =
     graph.Edges
     |> List.filter (fun e -> isEndPoint e vertex)
 
-let empty = {
-    Sources = [||];
-    NVerts = 0u;
-    Edges = [];
-}
+let verticies (graph: T): VertexId seq = 
+    graph.Verts
+    |> Array.toSeq
+    |> Seq.map (fun {Id = id} -> id)
 
-let create sources verts edges =
+let create verts edges =
     let newEdge e = { Ends = normalizeEdgeEnds e; Color = None} in
-    { Sources = sources; NVerts = verts; Edges = List.map newEdge edges; }
+    { Verts = verts; Edges = List.map newEdge edges; }
 
 let claimEdge graph color edge =
     let claimed = normalizeEdgeEnds edge in
@@ -54,10 +61,14 @@ let private colors = [|
 |]
 
 let toDot graph =
-    let renderNode id =
-        if isSource graph id
-        then sprintf "  %d [label=\"%d\", shape=\"square\"];" id id
-        else sprintf "  %d [label=\"%d\", shape=\"circle\"];" id id
+    let renderVertex {Id = id; IsSource = isSource; Coords = coords } =
+        let shape = if isSource then "square" else "circle" in
+        let position = 
+            match coords with
+            | None -> ""
+            | Some((x, y)) -> sprintf ", pos=\"%f,%f!\"" x y
+        in
+        sprintf "  %d [label=\"%d\", shape=\"%s\"%s];" id id shape position
     in
     let renderEdge { Ends = (u, v); Color = c} =
         let color: string =
@@ -66,7 +77,6 @@ let toDot graph =
             | None -> "black"
         in sprintf "  %d -- %d [color=\"%s\"];" u v color
     in
-    let mapJoin f xs = List.map f xs |> String.concat "\n" in
-    let nodes = [0u .. (graph.NVerts - 1u)] |> mapJoin renderNode in
-    let edges = graph.Edges |> mapJoin renderEdge in
+    let nodes = graph.Verts |> Array.map renderVertex |> String.concat "\n"
+    let edges = graph.Edges |> List.map renderEdge |> String.concat "\n"
     sprintf "graph {\n%s\n%s\n}" nodes edges

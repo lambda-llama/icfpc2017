@@ -12,14 +12,18 @@ let private applyClaim state (claim: ProtocolData.Claim) = {
 let private applyClaims state claims = List.fold applyClaim state claims
 
 let initialState (setup: ProtocolData.SetupIn ) =
-
+    let verts = 
+        setup.map.sites
+        |> Array.map (fun {id = id; coords = coords} -> 
+            { Graph.Id = uint32 id; 
+              Graph.IsSource = Array.contains id setup.map.mines; 
+              Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords; })
     let edges =
         setup.map.rivers
             |> Array.toList
             |> List.map (fun site -> (uint32 site.source, uint32 site.target))
-    let mines = setup.map.mines |> Array.map uint32
     in {
-        Graph = Graph.create mines (uint32 setup.map.sites.Length) edges;
+        Graph = Graph.create verts edges;
         Me = uint32 setup.punter;
     }
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
@@ -42,5 +46,5 @@ type Renderer = {
         let dot = sprintf "%s/%d.dot" this.directory this.count in
         let png = sprintf "%s/_%d.png" this.directory this.count in
         System.IO.File.WriteAllText(dot, (Graph.toDot game.Graph))
-        use p = System.Diagnostics.Process.Start("dot", sprintf "-Tpng %s -o %s" dot png)
+        use p = System.Diagnostics.Process.Start("dot", sprintf "-Kfdp -n -Tpng %s -o %s" dot png)
         this.count <- this.count + 1

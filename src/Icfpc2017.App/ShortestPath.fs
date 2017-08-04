@@ -24,6 +24,6 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[,]) =
             end
 
 let Compute (graph: Graph.T) (mines: Graph.VertexId list)= 
-    let res = Array2D.init mines.Length (int graph.NVerts) (fun a b -> -1) in
+    let res = Array2D.init mines.Length graph.Verts.Length (fun a b -> -1) in
     for mine in mines do
         BFS graph mine res
