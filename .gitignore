@@ -3,4 +3,5 @@ bin/
 obj/
 packages/
 *.png
+*.svg
 *.dot
