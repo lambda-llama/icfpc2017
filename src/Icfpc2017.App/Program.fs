@@ -20,7 +20,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
             match Pipe.read p with
             | ProtocolData.RequestMove moves ->
               let nextState = Game.applyMoveIn currState moves
-              let (source, target) = Graphs.Edge.ends (step nextState)
+              let (source, target) = Graphs.Graph.originalEnds currState.Graph2 (step nextState)
               let nextMove = ProtocolData.Claim {punter=punter; source=source; target=target}
               let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
               go nextState

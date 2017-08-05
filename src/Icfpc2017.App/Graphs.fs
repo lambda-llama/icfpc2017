@@ -104,6 +104,16 @@ module Graph =
         | Some color -> color = punter
         | None -> false
 
+    let fromOriginalEnds (graph: T) (u, v): Edge.T = 
+        let iu = Array.findIndex (fun x -> Vertex.id x = u) graph.Vertices
+        let iv = Array.findIndex (fun x -> Vertex.id x = v) graph.Vertices
+        let (iu, iv) = (min iu iv, max iu iv)
+        Array.find (fun e -> Edge.ends e = (iu, iv)) graph.Edges
+
+    let originalEnds (graph: T) (e: Edge.T) = 
+        let (iu, iv) = Edge.ends e
+        (Vertex.id graph.Vertices.[iu], Vertex.id graph.Vertices.[iv])
+
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)
     let shortestPath (graph: Graph.T) (source: int): int array =

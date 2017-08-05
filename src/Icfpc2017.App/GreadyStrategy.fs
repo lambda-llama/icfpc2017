@@ -10,5 +10,5 @@ let greadyStrategy: Strategy.T =
         let goodEdge = graph.Edges |> List.maxBy getScore
         let ver1, ver2 = goodEdge.Ends
         game.Union.Unite ver1 ver2
-        (ver1, ver2)
+        Graphs.Graph.fromOriginalEnds game.Graph2 (ver1, ver2)
     )
