@@ -41,7 +41,7 @@ let growFromMines =
                 let next = if vIsOurs then u else v in
                 distances
                 |> Map.toSeq
-                |> Seq.map (fun (mine, ds) -> ds.[int next])
+                |> Seq.map (fun (_, ds) -> ds.[int next])
                 |> Seq.min
             else if attachedToMine edge then 1
             else 0

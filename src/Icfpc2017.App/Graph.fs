@@ -84,8 +84,8 @@ let private makeScale (xs: float array): (float -> float) =
 
 let toDot we graph =
     let aux f = graph.Verts |> Array.map (fun v -> v.Coords |> Option.map f |> Option.defaultValue 1.0)
-    let scaleX = makeScale (aux (fun (x, y) -> x))
-    let scaleY = makeScale (aux (fun (x, y) -> y))
+    let scaleX = makeScale (aux (fun (x, _) -> x))
+    let scaleY = makeScale (aux (fun (_, y) -> y))
     let renderVertex {Id = id; IsSource = isSource; Coords = coords } =
         let shape = if isSource then "square" else "circle" in
         let position = 
