@@ -49,16 +49,23 @@ module Edge =
 module Graph =
     type T = private {
         NVertices: int
+        Vertices: Vertex array
         Sources: int array
         Edges: Edge.T array
     }
 
-    let create nVertices sources uvs: T =       
-        {NVertices=nVertices; 
+    let create nVertices sources uvs: T =
+        let vertices =
+            [0..nVertices - 1]
+            |> List.map (fun v -> sources |> Array.contains v)
+            |> List.map (fun s -> { IsSource = s; Coords = None })
+            |> List.toArray
+        {NVertices=nVertices;
+         Vertices=vertices;
          Sources=sources;
          Edges=Array.map Edge.create uvs}
 
-    let vertices {NVertices=nVertices} = [0..nVertices - 1]
+    let vertices {Vertices=vertices} = vertices
     let sources {Sources=sources} = sources
     let edges {Edges=es} = es
 
