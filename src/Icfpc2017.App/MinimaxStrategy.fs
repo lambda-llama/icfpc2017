@@ -11,10 +11,11 @@ let isConnected (game: State) vertex: bool =
         outEdges game.Graph vertex
         |> List.exists (isUnclaimedEdge >> not)
 
-let getUnclaimedEdges (game: State): Edge list =
+let getUnclaimedEdges (game: State): Edge array =
     game.Graph.Edges
     |> List.filter isUnclaimedEdge
     |> List.filter (fun { Ends = (a, b) } -> isConnected game a || isConnected game b)
+    |> List.toArray
 
 let heuristic (game: State): int =
     let graph = game.Graph
@@ -37,30 +38,43 @@ let heuristic (game: State): int =
     let bestOpponentScore = scores |> Array.max
     myScore - bestOpponentScore
 
-let rec _minimax (state: State) (edge: Edge) (player: Color) (depth: int): int =
+let rec _minimax (state: State) (edge: Edge) (player: Color) (depth: int) (alpha: int) (beta: int): int =
     let { Ends = ends } = edge
     let newState = { state with Graph = claimEdge state.Graph player ends }
     let nextPlayer = (player + 1) % state.NumPlayers
     
+    let min x y = if x < y then x else y
+    let max x y = if x > y then x else y
+
     if (depth = 0) then
         heuristic newState
     elif player = newState.Me then
         let mutable best = Int32.MinValue
-        for newEdge in (getUnclaimedEdges newState) do
-            let value = _minimax newState newEdge nextPlayer (depth - 1)
-            best <- if value > best then value else best
+        let mutable a = alpha
+        let edges = getUnclaimedEdges newState
+        let mutable i = 0
+        while (i = 0 || beta <= a) && i < edges.Length do
+            let value = _minimax newState edges.[i] nextPlayer (depth - 1) a beta
+            best <- max best value
+            a <- max a best
+            i <- i + 1
         best
     else
         let mutable best = Int32.MaxValue
-        for newEdge in (getUnclaimedEdges newState) do
-            let value = _minimax newState newEdge nextPlayer (depth - 1)
-            best <- if value < best then value else best
+        let mutable b = beta
+        let edges = getUnclaimedEdges newState
+        let mutable i = 0
+        while (i = 0 || b <= alpha) && i < edges.Length do
+            let value = _minimax newState edges.[i] nextPlayer (depth - 1) alpha b
+            best <- min best value
+            b <- min b best
+            i <- i + 1
         best
 
 let minimax: Strategy.T = fun game ->
     let maxDepth = 0
     let depth = int (Math.Min(maxDepth, game.Graph.Edges |> List.filter isUnclaimedEdge |> List.length))
     getUnclaimedEdges game
-    |> List.sortByDescending (fun e -> _minimax game e game.Me depth)
-    |> List.find (fun _ -> true)
+    |> Array.sortByDescending (fun e -> _minimax game e game.Me depth Int32.MinValue Int32.MaxValue)
+    |> Array.find (fun _ -> true)
     |> fun { Ends = ends } -> ends
