@@ -63,7 +63,7 @@ let runSimulation mapName =
     ]
     let (scores: int list) = Simulation.simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
     List.zip competitors scores
-    |> List.iter (fun (c, s) ->  printf "%s %d" c.name s)
+    |> List.iter (fun (c, s) ->  printf "%s %d\n" c.name s)
     
 
 [<EntryPoint>]

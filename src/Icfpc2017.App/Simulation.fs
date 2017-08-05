@@ -4,7 +4,7 @@ let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Gra
     let (me, name, step) = List.head punters
     if nStep = totalSteps then game
     else 
-        printf "Step %s %d\n" name nStep
+        printf "Step %d: %s\n" nStep name
         let (u, v) = step { game with Me = me }
         let nextState = Game.applyClaim game { punter = me; source = u; target = v }
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
