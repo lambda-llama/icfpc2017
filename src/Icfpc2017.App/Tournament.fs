@@ -26,7 +26,7 @@ let handshake (p: Pipe.T) (username: string): Async<ProtocolData.SetupIn> = asyn
         let! _ = Pipe.write p (ProtocolData.Ready {ready=setup.punter})
         return setup
 }
-let play (p: Pipe.T) punter (strategy: Strategy.T) =
+let play (p: Pipe.T) punter (step: Game.State -> (Graph.VertexId * Graph.VertexId)) =
     let rend = Game.Renderer.create "game"
     let rec go currState =
         async {
@@ -49,11 +49,12 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
     in go
 
 
-let online host port name strategy = async {
+let online host port name (strategy: Strategy.T) = async {
     let! p = Pipe.connect host port
     let! setup = handshake p name
     let initialState = Game.initialState setup
-    let! _ = play p setup.punter strategy initialState
+    let step = strategy.init initialState.Graph
+    let! _ = play p setup.punter step initialState
     printf "We: %d" (setup.punter)
     return ()
 }

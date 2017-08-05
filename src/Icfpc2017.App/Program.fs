@@ -13,18 +13,20 @@ let handshake (p: Pipe.T): unit =
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
-    let rec go currState =
-        rend.dump currState
-        match Pipe.read p with
-        | ProtocolData.RequestMove moves ->
-          let nextState = Game.applyMoveIn currState moves
-          let (source, target) = strategy nextState
-          let nextMove = ProtocolData.Claim {punter=punter; source=source; target=target}
-          let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
-          go nextState
-        | ProtocolData.Stop stop -> ()
-        | message -> failwithf "Unexpected response: %A\n" message        
-    in go
+    fun (initialState: Game.State) ->
+        let step = strategy.init initialState.Graph
+        let rec go currState =
+            rend.dump currState
+            match Pipe.read p with
+            | ProtocolData.RequestMove moves ->
+              let nextState = Game.applyMoveIn currState moves
+              let (source, target) = step nextState
+              let nextMove = ProtocolData.Claim {punter=punter; source=source; target=target}
+              let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
+              go nextState
+            | ProtocolData.Stop stop -> ()
+            | message -> failwithf "Unexpected response: %A\n" message        
+        in go initialState
 
 let online host port strategy = 
     let p = Pipe.connect host port
@@ -35,7 +37,7 @@ let online host port strategy =
        play p setup.punter strategy initialState
        printf "We: %d" (setup.punter)
 
-let offline strategy = 
+let offline (strategy: Strategy.T) = 
     let p = Pipe.std ()
     do handshake p
        match Pipe.read p with 
@@ -45,7 +47,7 @@ let offline strategy =
        | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
          let currState = JsonConvert.DeserializeObject state :?> Game.State
          let nextState = Game.applyMoveIn currState moveIn
-         let (source, target) = strategy nextState
+         let (source, target) = strategy.init (currState.Graph (* TODO: precompute me*)) nextState
          let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
          Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})          
        | _ -> ()      
@@ -57,13 +59,15 @@ let clientStart host port strategyName =
 let runSimulation mapName = 
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
     let competitors = [
-        Strategy.bruteForceOneStep
-        MinimaxStrategy.minimax
+        Strategy.bruteForce1
+        Strategy.bruteForce3
         Strategy.growFromMines
         Strategy.randomEdge
     ]
     let (scores: int list) = Simulation.simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
-    printf "%A" scores
+    List.zip competitors scores
+    |> List.iter (fun (c, s) ->  printf "%s %d" c.name s)
+    
 
 [<EntryPoint>]
 let main = function
@@ -79,7 +83,7 @@ let main = function
 | [|port; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
 | [||] ->
-    offline Strategy.bruteForceOneStep; 0
+    offline Strategy.bruteForce1; 0
 | _ -> 
     Strategies.all |> Map.toSeq |> Seq.map fst
         |> String.concat "|"

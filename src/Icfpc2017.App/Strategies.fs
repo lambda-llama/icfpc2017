@@ -6,11 +6,11 @@ open GreadyStrategy
 open MixedStrategy
 
 let all =
-    [("randomEdge", randomEdge);
-     ("growFromMines", growFromMines);
-     ("bruteForceOneStep", bruteForceOneStep);
-     ("bruteForceTwoStep", bruteForceTwoStep);
-     ("minimax", minimax);
-     ("gready", greadyStrategy);
-     ("mixed", mixedStrategy)]
+    [(randomEdge.name, randomEdge);
+     (growFromMines.name, growFromMines);
+     (bruteForce1.name, bruteForce1);
+     (bruteForce3.name, bruteForce3);
+     (minimax.name, minimax);
+     (greadyStrategy.name, greadyStrategy);
+     (mixedStrategy.name, mixedStrategy)]
     |> Map.ofList
