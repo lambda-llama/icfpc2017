@@ -4,44 +4,28 @@ open System.Collections.Generic
 
 type Color = int
 
+(* TODO: make private *)
 type Vertex = {
     IsSource: bool;
     Coords: (float * float) option
 }
 
 module Edge =
-    [<CustomEqualityAttribute; NoComparisonAttribute>]
-    type T =
-        private {
-            Ends: int * int
-            Color: Color option
-        }
-
-        override x.GetHashCode() = hash x.Ends
-        override x.Equals(other) =
-            match other with
-            | :? T as y -> x.Ends = y.Ends
-            | _ -> false
+    type T = private Edge of (int * int)
 
     (* Enforces an invariant that the first vertex ID is smaller. *)
-    let create (u, v) = {Ends=(min u v, max u v); Color=None}
+    let create uv = Edge uv
 
-    let ends {Ends=ends} = ends
+    let ends (Edge uv) = uv
 
-    let opposite {Ends=(u, v)} w =
+    let opposite (Edge (u, v)) w =
         if w = u
         then v
         else
             assert (w = v)
             u
 
-    let contains {Ends=(u, v)} w = u = w || v = w
-
-    let isClaimed {Color=optC} = Option.isSome optC
-    let isClaimedBy {Color=optC} punter =
-        Option.map ((=) punter) optC |> Option.defaultValue false
-
-    let claim edge punter = {edge with Color=Some punter}
+    let contains (Edge (u, v)) w = u = w || v = w    
 
 (**
  * The Graph.
@@ -52,6 +36,7 @@ module Graph =
         Vertices: Vertex array
         Sources: int array
         Edges: Edge.T array
+        Colors: Map<int, Color>
     }
 
     let create nVertices sources uvs: T =
@@ -60,10 +45,12 @@ module Graph =
             |> List.map (fun v -> sources |> Array.contains v)
             |> List.map (fun s -> { IsSource = s; Coords = None })
             |> List.toArray
+            
         {NVertices=nVertices;
          Vertices=vertices;
          Sources=sources;
-         Edges=Array.map Edge.create uvs}
+         Edges=Array.map Edge.create uvs;
+         Colors=Map.empty}
 
     let vertices {Vertices=vertices} = vertices
     let sources {Sources=sources} = sources
@@ -77,8 +64,8 @@ module Graph =
         |> Array.filter (fun e -> Edge.contains e vid)
         |> Array.map (fun e -> Edge.opposite e vid)
 
-    let claimEdge {Edges=es} eid punter =
-        es.[eid] <- Edge.claim es.[eid] punter   
+    let claimEdge ({Colors=cs} as g) punter eid: T =
+        {g with Colors=Map.add eid punter cs}
 
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)

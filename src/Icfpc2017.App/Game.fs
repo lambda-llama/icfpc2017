@@ -1,12 +1,25 @@
 module Game
 
+(* Mapping from external to internal IDs. *)
+type Index<'a when 'a : comparison> = {
+    eToI: Map<'a, int>
+    iToE: 'a array
+} with 
+    static member create (iToE: 'a array): 'a Index = 
+        let eToI = iToE 
+                   |> Array.mapi (fun i item -> (item, i)) 
+                   |> Map.ofArray
+        {eToI=eToI; iToE=iToE}
+
+    member x.i (key: 'a) = x.eToI.[key]
+    member x.e (key: int) = x.iToE.[key]  
+
 type VertexId = int
 
 type State = {
     Graph: Graph.T
     Graph2: Graphs.Graph.T
-    externalToVid: Map<VertexId, int>
-    vidToExternal: VertexId array
+    EIndex: (VertexId * VertexId) Index        
     Me: Graph.Color
     BFSDist: Map<Graph.VertexId, int[]>
     Union: FastUnion.T
@@ -14,12 +27,18 @@ type State = {
 }
 
 let applyClaim state (claim: ProtocolData.Claim) = 
+    let edge = (claim.source, claim.target)
+    let eid = state.EIndex.i(edge)
     if claim.punter = state.Me
     then
         let _ = state.Union.Unite claim.source, claim.target 
-        {state with Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target)}
+        {state with 
+           Graph = Graph.claimEdge state.Graph claim.punter edge
+           Graph2 = Graphs.Graph.claimEdge state.Graph2 claim.punter eid}
     else
-        {state with Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target)}
+        {state with 
+           Graph = Graph.claimEdge state.Graph claim.punter edge
+           Graph2 = Graphs.Graph.claimEdge state.Graph2 claim.punter eid}
 
 let private applyClaims state claims = List.fold applyClaim state claims
 
@@ -32,31 +51,28 @@ let initialState (setup: ProtocolData.SetupIn ) =
               Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords })
     let edges = setup.map.rivers |> Array.map (fun site -> (site.source, site.target)) 
 
-    (* Mapping from external to internal IDs. *)
-    let externalToVid =
-        Seq.mapi (fun vid {Graph.Id=id} -> (id, vid)) verts |> Map.ofSeq
-    let vidToExternal = Array.map (fun {Graph.Id=id} -> id) verts
-
+    let vIndex = Array.map (fun {Graph.Id=id} -> id) verts |> Index.create
+    let eIndex = Index.create edges
+    
     let nVertices = Array.length verts 
     let sources =
         {0..nVertices - 1}
         |> Seq.filter (fun vi -> verts.[vi].IsSource)
         |> Seq.toArray
     let edges2 = 
-        edges 
-        |> Array.map (fun (u, v) -> (externalToVid.[u], externalToVid.[v]))
+        Array.map (fun (u, v) -> (vIndex.i(u), vIndex.i(v))) edges
 
     let G = Graph.create verts (Array.toList edges)
     {
         Graph = G
         Graph2 = Graphs.Graph.create nVertices sources edges2
-        externalToVid = externalToVid
-        vidToExternal = vidToExternal
+        EIndex = eIndex
         Me = setup.punter
         BFSDist = ShortestPath.Compute G
         Union = FastUnion.T G
         NumPlayers = setup.punters
     }
+
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
     moveIn.move.moves
     |> Array.toList
@@ -73,8 +89,7 @@ let score game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, in
         for v in sinks do
             let d = dist.[u.Id].[int v.Id] in
             if reach.[u.Id].[int v.Id] <> -1 then total <- total + d * d
-    total
-
+    total  
 
 
 type Renderer = {
