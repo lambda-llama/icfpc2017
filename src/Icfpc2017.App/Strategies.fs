@@ -3,6 +3,7 @@ module Strategies
 open MinimaxStrategy
 open Strategy
 open GreadyStrategy
+open MixedStrategy
 
 let all =
     [("randomEdge", randomEdge);
@@ -10,5 +11,6 @@ let all =
      ("bruteForceOneStep", bruteForceOneStep);
      ("bruteForceTwoStep", bruteForceTwoStep);
      ("minimax", minimax);
-     ("gready", greadyStrategy)]
+     ("gready", greadyStrategy);
+     ("mixed", mixedStrategy)]
     |> Map.ofList
