@@ -163,12 +163,11 @@ module Traversal =
         let distances = Array.create (Graph.nVertices graph) -1 in
         let work = new Queue<int>() in
 
-        let enqueueIfNeed x dist = begin
+        let enqueueIfNeed x dist = 
             if distances.[x] <> -1 then ()
             else 
                 work.Enqueue x
                 distances.[x] <- dist
-        end 
 
         enqueueIfNeed source 0
 
