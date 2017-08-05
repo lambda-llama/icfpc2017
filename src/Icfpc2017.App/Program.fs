@@ -39,7 +39,9 @@ let online host port strategy = async {
     let! p = Pipe.connect host port
     let! setup = handshake p
     let initialState = Game.initialState setup
-    return! play p setup.punter strategy initialState
+    let! _ = play p setup.punter strategy initialState
+    printf "We: %d" (setup.punter)
+    return ()
 }
 
 let clientStart host port strategyName =
