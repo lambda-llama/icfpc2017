@@ -65,7 +65,7 @@ let claimEdge graph color edge =
     { graph with Edges = List.map claim graph.Edges }
 
 let private colors = [|
-    "blue"; "pink"; "yellow"; "cyan"; "dimgrey"; "green"; "indigo"; "margenta"
+    "blue"; "green"; "indigo"; "yellow"; "cyan"; "dimgrey"; "margenta"; "pink"
 |]
 
 let toDot we graph =
