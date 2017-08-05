@@ -64,6 +64,15 @@ module Graph =
     let withEdges (graph: T) es =
         { graph with Edges=es }
 
+    (** Focus on a subgraph of a specific color. *)
+    let subgraph (g : T) (color: Color): T = 
+        (* TODO: ideally just filter in [[adjacent]]. *)
+        let subColors = Map.filter (fun _ -> (=) color) g.Colors
+        let subEdges = 
+            g.Edges 
+            |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors) 
+        {g with Edges=subEdges; Colors=subColors}
+
     let adjacent {Edges=es} vid =
         es
         |> Array.filter (fun e -> Edge.contains e vid)
