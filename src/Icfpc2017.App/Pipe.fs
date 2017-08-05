@@ -40,9 +40,15 @@ let accept (server: TcpListener): Async<T> =
         return {InStream=stream; OutStream=stream}
     }
 
+let inline retry f = 
+    let rec go f = function
+    | 0 -> failwith "<>-<"
+    | n -> try f () with _ -> go f (n - 1)
+    in go f 100
+
 let commonRead (p: T) (deserialize : string -> 'a): 'a =
     let rec readLength (sb: StringBuilder) =
-        match char (p.InStream.ReadByte ()) with
+        match char (retry p.InStream.ReadByte) with
         | ':' -> int (sb.ToString ())
         | ch  ->
             ignore (sb.Append ch);
@@ -50,11 +56,11 @@ let commonRead (p: T) (deserialize : string -> 'a): 'a =
     and readMessage (ob : byte array) offset =
         if offset = ob.Length
         then
-            let message = deserialize(Encoding.ASCII.GetString ob)
+            let message = deserialize (Encoding.ASCII.GetString ob)
             if !debug then eprintf "<<< %A\n" message
             message
         else
-            let read = p.InStream.Read(ob, offset, ob.Length - offset)
+            let read = retry (fun () -> p.InStream.Read(ob, offset, ob.Length - offset))
             readMessage ob (offset + read)        
     in readMessage (readLength (StringBuilder ()) |> Array.zeroCreate) 0
 
@@ -65,7 +71,7 @@ let serverRead (p: T): Async<ProtocolData.MessageOut> =
     commonRead p ProtocolData.serverDeserialize *)
 
 let _write (stream: Stream) (b: byte array) =
-    stream.Write(b, 0, b.Length)
+    retry (fun () -> stream.Write(b, 0, b.Length))
 
 let commonWrite (p: T) (serialize: 'a -> string) (message: 'a): unit = 
     if !debug then eprintf ">>> %A\n" message
