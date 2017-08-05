@@ -68,9 +68,6 @@ module Graph =
     let nVertices = vertices >> Array.length
     let nEdges = edges >> Array.length
 
-    let withEdges (graph: T) es =
-        { graph with Edges=es }
-
     (** Focus on a subgraph of a specific color. *)
     let subgraph (g : T) (color: Color): T =
         (* TODO: ideally just filter in [[adjacent]]. *)
