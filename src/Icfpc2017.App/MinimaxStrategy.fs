@@ -5,44 +5,6 @@ open System
 open Game
 open Graphs
 
-let isSource (graph: Graph.T) vertex =
-    (Graph.vertices graph).[vertex] |> Vertex.isSource
-
-let outEdges (graph: Graph.T) vertex: Edge.T array =
-    (Graph.edges graph)
-    |> Array.filter (fun e -> Edge.contains e vertex)
-
-let isUnclaimedEdge (graph: Graph.T) (edge: Edge.T): bool =
-    Graph.isClaimed graph edge |> not
-
-let isConnected (game: State) vertex: bool =
-    isSource game.Graph vertex ||
-        outEdges game.Graph vertex
-        |> Array.exists (isUnclaimedEdge game.Graph >> not)
-
-let getUnclaimedEdges (game: State) (player: Color): Edge.T array =
-    (Graph.edges game.Graph)
-    |> Array.filter (isUnclaimedEdge game.Graph)
-    |> Array.filter
-        (fun e ->
-            let (a, b) = Edge.ends e
-            isConnected game a || isConnected game b)
-
-let heuristic (game: State): int =
-    let graph = game.Graph
-    let dists = Traversal.shortestPaths graph
-    let reaches =
-        [0..game.NumPlayers - 1]
-        |> List.map (fun p -> Traversal.shortestPaths (Graph.subgraph graph p))
-    let scores =
-        reaches
-        |> List.map (fun r -> Game.score2 game dists r)
-        |> List.toArray
-    let myScore = scores.[game.Me]
-    scores.[game.Me] <- Int32.MinValue
-    let bestOpponentScore = scores |> Array.max
-    myScore - bestOpponentScore
-
 module Minimax =
     type T = private {
         score: State -> int
@@ -101,11 +63,39 @@ module Minimax =
         m.getMoves state player
         |> Array.map (fun e -> (e, minimax m state e player depth Int32.MinValue Int32.MaxValue))
 
+let isConnected (game: State) vertex: bool =
+    (Graph.vertices game.Graph).[vertex] |> Vertex.isSource ||
+        Graph.adjacentEdges game.Graph vertex
+        |> Seq.exists (Graph.isClaimed game.Graph)
+
+let getUnclaimedEdges (game: State) (player: Color): Edge.T array =
+    (Graph.edges game.Graph)
+    |> Array.filter (Graph.isClaimed game.Graph >> not)
+    |> Array.filter
+        (fun e ->
+            let (a, b) = Edge.ends e
+            isConnected game a || isConnected game b)
+
+let heuristic (game: State): int =
+    let graph = game.Graph
+    let dists = Traversal.shortestPaths graph
+    let reaches =
+        [0..game.NumPlayers - 1]
+        |> List.map (fun p -> Traversal.shortestPaths (Graph.subgraph graph p))
+    let scores =
+        reaches
+        |> List.map (fun r -> Game.score2 game dists r)
+        |> List.toArray
+    let myScore = scores.[game.Me]
+    scores.[game.Me] <- Int32.MinValue
+    let bestOpponentScore = scores |> Array.max
+    myScore - bestOpponentScore
+
 let minimax =
     Strategy.stateless "minimax" (fun game ->
         let maxDepth =
             (Graph.edges game.Graph)
-            |> Array.filter (isUnclaimedEdge game.Graph)
+            |> Array.filter (Graph.isClaimed game.Graph >> not)
             |> Array.length
         let depth = int (Math.Min(10, maxDepth))
         let m =
@@ -123,7 +113,7 @@ let minimax2 =
     Strategy.stateless "minimax2" (fun game ->
         let maxDepth =
             (Graph.edges game.Graph)
-            |> Array.filter (isUnclaimedEdge game.Graph)
+            |> Array.filter (Graph.isClaimed game.Graph >> not)
             |> Array.length
         // Find worst enemy - our move is the first, so try to maximize each enemy's potential threat
         let depth = int (Math.Min(game.NumPlayers * 2, maxDepth))
