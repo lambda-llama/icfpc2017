@@ -19,6 +19,7 @@
     <Compile Include="MixedStrategy.fs" />
     <Compile Include="Strategies.fs" />
     <Compile Include="Pipe.fs" />
+    <Compile Include="Simulation.fs" />
     <!-- <Compile Include="Server.fs" /> -->
     <Compile Include="Program.fs" />
   </ItemGroup>

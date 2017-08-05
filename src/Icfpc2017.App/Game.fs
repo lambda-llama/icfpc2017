@@ -8,7 +8,7 @@ type State = {
     NumPlayers: int
 }
 
-let private applyClaim state (claim: ProtocolData.Claim) = 
+let applyClaim state (claim: ProtocolData.Claim) = 
     if claim.punter = state.Me
         then
             state.Union.Unite claim.source, claim.target 
