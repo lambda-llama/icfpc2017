@@ -14,6 +14,7 @@ let handshake (p: Pipe.T): unit =
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
     fun (initialState: Game.State) ->
+        eprintf "%A\n" (initialState.Graph2)
         let step = strategy.init initialState.Graph2
         let rec go currState =
             rend.dump currState
@@ -23,6 +24,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
               let vIndex = currState.VIndex
               let (u, v) = step nextState |> Graphs.Edge.ends
               let (eu, ev) = (vIndex.e(u), vIndex.e(v))
+              eprintf "uv %A euev %A\n" (u, v) (eu, ev)
               let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
               let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
               go nextState

@@ -160,7 +160,7 @@ module Graph =
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)
     let shortestPath (graph: Graph.T) (source: int): int array =
-        let distances = Array.zeroCreate (Graph.nVertices graph) in
+        let distances = Array.create (Graph.nVertices graph) -1 in
         let seen = Array.create (Graph.nVertices graph) false in
         let q = new Queue<int>() in
         distances.[source] <- 0
