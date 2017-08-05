@@ -81,7 +81,7 @@ module Graph =
 
     let unclaimed {Edges=es; Colors=colors}: Edge.T seq = 
         Array.toSeq es
-        |> Seq.filter (fun e -> Map.containsKey (Edge.id e) colors)
+        |> Seq.filter (fun e -> not (Map.containsKey (Edge.id e) colors))
 
     let claimEdge ({Colors=cs} as g) punter eid: T =
         {g with Colors=Map.add eid punter cs}
