@@ -24,9 +24,10 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[]) =
             end
 
 let Compute (graph: Graph.T) = 
+    let maxVertId = graph.Verts |> Array.map (fun x -> x.Id) |> Array.max |> int in
     graph.Verts |> Array.filter (fun v -> v.IsSource)
         |> Array.map (fun source ->
-            let distances = Array.create graph.Verts.Length -1 in
+            let distances = Array.create maxVertId -1 in
             BFS graph source.Id distances
             (source.Id, distances))
         |> Map.ofArray
