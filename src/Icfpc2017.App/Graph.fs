@@ -21,6 +21,11 @@ type T = {
     Edges : Edge list
 }
 
+let sanityCheck graph = 
+    let maxId = graph.Verts |> Array.map (fun v -> v.Id) |> Array.max
+    for {Ends = (u, v)} in graph.Edges do
+        assert (u <= maxId && v <= maxId)
+
 
 let normalizeEdgeEnds (u, v) =
     (min u v, max u v)

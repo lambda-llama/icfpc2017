@@ -24,6 +24,7 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[]) =
             end
 
 let Compute (graph: Graph.T) = 
+    Graph.sanityCheck graph
     let maxVertId = graph.Verts |> Array.map (fun x -> x.Id) |> Array.max |> int in
     graph.Verts |> Array.filter (fun v -> v.IsSource)
         |> Array.map (fun source ->
