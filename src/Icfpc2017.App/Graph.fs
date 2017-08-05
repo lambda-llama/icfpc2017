@@ -65,7 +65,11 @@ let claimEdge graph color edge =
     { graph with Edges = List.map claim graph.Edges }
 
 let private colors = [|
-    "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink" 
+    "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink"; 
+    "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+    "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+    "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+    "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
 |]
 
 let private makeScale (xs: float array): (float -> float) =
