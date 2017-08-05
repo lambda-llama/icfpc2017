@@ -17,14 +17,14 @@ type Index<'a when 'a : comparison> = {
     member x.i (key: 'a) = x.eToI.[key]
     member x.e (key: int) = x.iToE.[key]
 
-type VertexId = int
+type VertexId = Graph.VertexId
 
 type State = {
     Graph: Graph.T
     Graph2: Graph2.T
     EIndex: (VertexId * VertexId) Index
     Me: Graph.Color
-    BFSDist: Map<Graph.VertexId, int[]>
+    BFSDist: Map<VertexId, int[]>
     Union: FastUnion.T
     NumPlayers: int
 }
@@ -35,7 +35,6 @@ let ordered (u, v) = (min u v, max u v)
 let applyClaim state (claim: ProtocolData.Claim) =
     let edge = ordered (claim.source, claim.target)
     let eid = state.EIndex.i(edge)
-    eprintf "EID: %d (%A)" eid edge
     if claim.punter = state.Me
     then
         let _ = state.Union.Unite claim.source, claim.target
@@ -91,7 +90,7 @@ let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
         | ProtocolData.Pass _ -> None)
     |> applyClaims state
 
-let score game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, int[]>) =
+let score game (dist: Map<VertexId, int[]>) (reach: Map<VertexId, int[]>) =
     let isSource { Graph.IsSource = s } = s in
     let (sources, sinks) = Array.partition isSource game.Graph.Verts in
     let mutable total = 0;
@@ -101,7 +100,7 @@ let score game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, in
             if reach.[u.Id].[int v.Id] <> -1 then total <- total + d * d
     total
 
-let score2 game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, int[]>) =
+let score2 game (dist: Map<int, int[]>) (reach: Map<int, int[]>) =
     let (sources, sinks) = Array.partition Vertex2.isSource (Graph2.vertices game.Graph2)
     let mutable total = 0
     for u in sources do

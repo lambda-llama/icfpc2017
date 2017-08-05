@@ -65,7 +65,7 @@ let bruteForce1 =
         let weight (edge: Graphs.Edge.T) =
             let graph = Graphs.Graph.claimEdge graph me (Graphs.Edge.id edge)
             let reach = Graphs.Traversal.shortestPaths (Graphs.Graph.subgraph graph me)
-            Game.score {game with Game.Graph2 = graph } dists reach
+            Game.score2 {game with Game.Graph2 = graph } dists reach
         in
         maxByWeight graph weight
     )
@@ -85,7 +85,7 @@ let bruteForce3 =
                 |> Seq.map (fun edge -> 
                     let graph = Graphs.Graph.claimEdge graph me (Graphs.Edge.id edge)
                     let reach = Graphs.Traversal.shortestPaths (Graphs.Graph.subgraph graph me)
-                    Game.score {game with Game.Graph2 = graph } dists reach
+                    Game.score2 {game with Game.Graph2 = graph } dists reach
                 )
                 |> makeNotEmpty
                 |> Seq.max
