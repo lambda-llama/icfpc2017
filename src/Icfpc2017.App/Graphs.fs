@@ -2,7 +2,7 @@ module Graphs
 
 open System.Collections.Generic
 
-type Color = int
+type Color = ProtocolData.Color
 
 module Vertex =
     type T = private {

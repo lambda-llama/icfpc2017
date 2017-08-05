@@ -19,7 +19,7 @@ type Index<'a when 'a : comparison> = {
     member x.e (key: int) = x.iToE.[key]
 
 type VertexId = ProtocolData.VertexId
-type Color = int
+type Color = ProtocolData.Color
 
 type State = {
     Graph2: Graph2.T

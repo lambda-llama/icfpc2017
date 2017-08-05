@@ -17,6 +17,7 @@ type HandshakeIn = {
 // 1. Setup
 
 type VertexId = uint32
+type Color = int
 
 type Coords = {
     x : float
@@ -44,7 +45,7 @@ type Settings = {
 }
 
 type SetupIn = {
-    punter : int
+    punter : Color
     punters : int
     map : Map
     settings : Settings
@@ -59,13 +60,13 @@ type SetupOut = {
 // 2. Gameplay
 
 type Claim = {
-    punter : int
+    punter : Color
     source : VertexId
     target : VertexId
 }
 
 type Pass = {
-    punter : int
+    punter : Color
 }
 
 type Move =
@@ -89,7 +90,7 @@ type MoveOut = {
 // 3. Scoring
 
 type Score = {
-    punter : int
+    punter : Color
     score : int
 }
 
@@ -156,7 +157,7 @@ let serializeMap (m : Map) : JObject =
     JObject(
         JProperty("sites", serializeArray m.sites serializeSite),
         JProperty("rivers", serializeArray m.rivers serializeRiver),
-        JProperty("mines", serializeArray m.mines (fun m -> m)))
+        JProperty("mines", serializeArray m.mines id))
 
 let serializeSettings (s : Settings) : JObject =
     JObject(
@@ -170,20 +171,20 @@ let serializeSetupIn (s : SetupIn) : JObject =
         JProperty("settings", serializeSettings s.settings))
 
 let serializeSetupOut (s : SetupOut) : JObject =
-    match s.state with 
-    | Some state -> 
+    match s.state with
+    | Some state ->
       JObject(
           JProperty("ready" , s.ready),
           JProperty("state", state),
           JProperty("futures", serializeArray s.futures serializeRiver))
-    | None -> 
+    | None ->
       JObject(
           JProperty("ready" , s.ready),
           JProperty("futures", serializeArray s.futures serializeRiver))
 
 let serializeClaim (c : Claim) : JObject =
     JObject(
-        JProperty("claim",        
+        JProperty("claim",
             JObject(
                 JProperty("punter", c.punter),
                 JProperty("source", c.source),
@@ -209,11 +210,11 @@ let serializeMoveIn (m : MoveIn) : JObject =
         JProperty("move", serializeMoves m.move))
 
 let serializeMoveOut (m : MoveOut) : JObject =
-    let o = 
+    let o =
         match m.move with
         | Claim claim -> serializeClaim claim
         | Pass pass -> serializePass pass
-    in match m.state with 
+    in match m.state with
        | Some state -> o.Add(JProperty("state", state)); o
        | None -> o
 
@@ -280,7 +281,7 @@ let deserializeCoords (o : JObject) : Coords option =
         Some (
             {
                 x = o.["x"].ToObject<float>()
-                y = o.["y"].ToObject<float>()                
+                y = o.["y"].ToObject<float>()
             })
 
 let deserializeSite (o : JObject) : Site =
@@ -309,12 +310,12 @@ let deserializeSettings (o : JObject) =
         futures = o.["futures"].ToObject<bool>()
     }
 
-let deserializeState (o : JObject) = 
+let deserializeState (o : JObject) =
     if o.["state"] = null then None else Some (o.["state"].ToObject<string> ())
 
 let deserializeSetupIn (o : JObject) : SetupIn =
     {
-        punter = o.["punter"].ToObject<int>()
+        punter = o.["punter"].ToObject<Color>()
         punters = o.["punters"].ToObject<int>()
         map = (o.["map"] :?> JObject) |> deserializeMap
         settings = (o.["settings"] :?> JObject) |> deserializeSettings
@@ -333,30 +334,30 @@ let deserializeMove (o : JObject) : Move =
     match (prop.Name) with
     | "claim" ->
         Claim {
-            punter = v.["punter"].ToObject<int>()
+            punter = v.["punter"].ToObject<Color>()
             source = v.["source"].ToObject<VertexId>()
             target = v.["target"].ToObject<VertexId>()
         }
     | "pass" ->
         Pass {
-            punter = v.["punter"].ToObject<int>()
+            punter = v.["punter"].ToObject<Color>()
         }
     | x -> raise (exn x)
 
 let deserializeMoveOut (o : JObject) : MoveOut =
     let prop = o.Properties().First()
     let v = prop.Value :?> JObject
-    let move = 
+    let move =
         match (prop.Name) with
         | "claim" ->
             Claim {
-                punter = v.["punter"].ToObject<int>()
+                punter = v.["punter"].ToObject<Color>()
                 source = v.["source"].ToObject<VertexId>()
                 target = v.["target"].ToObject<VertexId>()
             }
         | "pass" ->
             Pass {
-                punter = v.["punter"].ToObject<int>()
+                punter = v.["punter"].ToObject<Color>()
             }
         | x -> raise (exn x)
     in {move=move; state=deserializeState o}
@@ -374,7 +375,7 @@ let deserializeMoveIn (o : JObject) : MoveIn =
 
 let deserializeScore (o : JObject) : Score =
     {
-        punter = o.["punter"].ToObject<int>()
+        punter = o.["punter"].ToObject<Color>()
         score = o.["score"].ToObject<int>()
     }
 
