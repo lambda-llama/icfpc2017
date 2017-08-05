@@ -17,4 +17,4 @@ case $1 in
     ;;
 esac
 
-dotnet $SCRIPT_DIR/bin/$CONFIG/netcoreapp1.1/Icfpc2017.App.dll $*
+dotnet $SCRIPT_DIR/bin/$CONFIG/netcoreapp2.0/Icfpc2017.App.dll $*
