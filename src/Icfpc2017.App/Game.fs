@@ -8,9 +8,25 @@ type State = {
     NumPlayers: int
 }
 
-let private applyClaim state (claim: ProtocolData.Claim) = {
-    state with Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target);
-}
+let private applyClaim state (claim: ProtocolData.Claim) = 
+    if claim.punter = state.Me
+        then
+            state.Union.Unite claim.source, claim.target 
+            {
+                Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target); 
+                Me = state.Me
+                BFSDist = state.BFSDist
+                Union = state.Union
+                NumPlayers =state.NumPlayers
+            }
+        else
+            {
+                Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target); 
+                Me = state.Me
+                BFSDist = state.BFSDist
+                Union = state.Union
+                NumPlayers =state.NumPlayers
+            }
 
 let private applyClaims state claims = List.fold applyClaim state claims
 

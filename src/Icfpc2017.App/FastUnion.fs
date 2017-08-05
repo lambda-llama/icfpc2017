@@ -1,17 +1,15 @@
 module FastUnion
 
 type T (graph: Graph.T) = 
-    let maxVertId = graph.Verts |> Array.map (fun x -> x.Id) |> Array.max |> int
+    let maxVertId = graph.Verts |> Array.map (fun x -> x.Id) |> Array.max |> int |> fun x->x+1
     let part = UnionFind.Partition maxVertId
     let unionarray : Union.T[] = [|
                     for i in 0..maxVertId do
                         for v in graph.Verts do
                         if int v.Id = i
-                        then
-                            if v.IsSource
-                            then yield { Mines = [v.Id]; Sites = [] }
-                            else yield { Mines = []; Sites = [v.Id] }
-                        yield {Mines = []; Sites = []}|]
+                        then yield Union.create v|]
+    
+    member p.TestGetUnion x = unionarray.[x]
 
     member p.IsInSame v1 v2 =
         part.find(v1) = part.find(v2)

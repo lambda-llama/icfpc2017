@@ -5,6 +5,11 @@ type T = {
     Sites: Graph.VertexId list
 }
 
+ let create (v: Graph.Vertex) = 
+    match v.IsSource with
+    | true -> { Mines = [int v.Id]; Sites = [] }
+    | _ -> { Mines = []; Sites = [int v.Id] }
+
 let getOneSideScore (mines: Graph.VertexId list) (sites: Graph.VertexId list) (dist: Map<Graph.VertexId, int[]>) = 
     let mutable sum = 0 in
     for m in mines do
@@ -18,3 +23,5 @@ let getScore union1 union2 dist =
 
 let merge (union1: T) (union2: T) = 
     { Mines = union1.Mines@union2.Mines; Sites = union1.Sites@union2.Sites }
+
+ 
