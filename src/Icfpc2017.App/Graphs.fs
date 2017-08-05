@@ -4,7 +4,7 @@ open System.Collections.Generic
 
 type Color = int
 
-module Vertex = 
+module Vertex =
     type T = private {
         Id: int
         IsSource: bool
@@ -51,7 +51,7 @@ module Graph =
 
     let create (vertCoords: (float * float) option array) sources uvs: T =
         let vertices =
-            vertCoords 
+            vertCoords
             |> Array.toSeq
             |> Seq.mapi (fun vid coord -> Vertex.create vid (Array.contains vid sources) coord)
             |> Seq.toArray
@@ -90,10 +90,6 @@ module Graph =
         |> Array.toSeq
         |> Seq.filter (fun e -> Edge.contains e vid)
 
-    let unclaimed {Edges=es; Colors=colors}: Edge.T seq = 
-        Array.toSeq es
-        |> Seq.filter (fun e -> not (Map.containsKey (Edge.id e) colors))
-
     let claimEdge ({Colors=cs} as g) punter eid: T =
         {g with Colors=Map.add eid punter cs}
 
@@ -105,13 +101,18 @@ module Graph =
         | Some color -> color = punter
         | None -> false
 
-    let edgeId {Edges=es} uv = 
+    let unclaimed ({Edges=es} as g): Edge.T seq =
+        Array.toSeq es |> Seq.filter (isClaimed g >> not)
+
+    let edgeId {Edges=es} uv =
+        (* XXX normalize ends. *)
+        let uv = Edge.create 0 uv |> Edge.ends
         Array.find (fun e -> Edge.ends e = uv) es |> Edge.id
 
     let edgeColor {Colors=cs} e = cs.TryFind (Edge.id e)
 
     let private colors = [|
-        "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink"; 
+        "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink";
         "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
         "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
         "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
@@ -130,7 +131,7 @@ module Graph =
         let renderVertex v =
             let id = Vertex.id v
             let shape = if Vertex.isSource v then "square" else "circle" in
-            let position = 
+            let position =
                 match Vertex.coords v with
                 | None -> ""
                 | Some((x, y)) -> sprintf ", pos=\"%f,%f!\"" (scaleX x) (- (scaleY y))
@@ -156,7 +157,7 @@ module Traversal =
         let distances = Array.create (Graph.nVertices graph) -1 in
         let work = new Queue<int>() in
 
-        let enqueueIfNeed x dist = 
+        let enqueueIfNeed x dist =
             if distances.[x] = -1 then
                 work.Enqueue x
                 distances.[x] <- dist

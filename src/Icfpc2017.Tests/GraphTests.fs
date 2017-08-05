@@ -4,7 +4,15 @@ open NUnit.Framework
 
 open Graphs
 
-[<TestFixture>]
+module GraphTests = 
+    [<Test>]
+    let edgeId () = 
+        let edges = [|(0, 1)|] 
+        let coords = Array.create 2 None 
+        let graph = Graph.create coords [|0|] edges 
+        Assert.That(Graph.edgeId graph (0, 1), Is.EqualTo 0)
+        Assert.That(Graph.edgeId graph (1, 0), Is.EqualTo 0)        
+
 module TraversalTests =
     [<Test>]
     let singleEdge () =

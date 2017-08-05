@@ -32,20 +32,15 @@ type State = {
 let applyClaim state (claim: ProtocolData.Claim) =
     let edge2 = (state.VIndex.i(claim.source), state.VIndex.i(claim.target))
     let eid = Graph2.edgeId state.Graph2 edge2
-    if claim.punter = state.Me
-    then
-        {state with
-           Graph2 = Graph2.claimEdge state.Graph2 claim.punter eid}
-    else
-        {state with
-           Graph2 = Graph2.claimEdge state.Graph2 claim.punter eid}
+    {state with
+       Graph2 = Graph2.claimEdge state.Graph2 claim.punter eid}
 
 let private applyClaims state claims = List.fold applyClaim state claims
 
 let initialState (setup: ProtocolData.SetupIn ) =   
     let coords = 
         setup.map.sites 
-        |> Array.map (fun {coords=coords} -> coords |> Option.map (fun c -> (c.x, c.y)))
+        |> Array.map (fun s -> s.coords |> Option.map (fun c -> (c.x, c.y)))
 
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
     let sources = setup.map.mines |> Array.map (fun vid -> vIndex.i(vid))    
