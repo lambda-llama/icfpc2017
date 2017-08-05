@@ -66,9 +66,9 @@ let runSimulation mapName =
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
     let competitors = [
         Strategy.bruteForce1
-        // Strategy.bruteForce3
-        Strategy.growFromMines
-        Strategy.randomEdge
+        Strategy.bruteForce3
+        MinimaxStrategy.minimax
+        // Strategy.randomEdge
     ]
     let (scores: int list) = Simulation.simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
     List.zip competitors scores
