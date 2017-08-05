@@ -117,3 +117,38 @@ let minimax =
         |> fst
         |> Option.get
     )
+
+let minimax2 =
+    Strategy.stateless "minimax2" (fun game ->
+        let maxDepth =
+            (Graph.edges game.Graph2)
+            |> Array.filter (isUnclaimedEdge game.Graph2)
+            |> Array.length
+        // Find worst enemy - our move is the first, so try to maximize each enemy's potential threat
+        let depth = int (Math.Min(game.NumPlayers * 2, maxDepth))
+        let setups =
+            [0..game.NumPlayers - 1]
+            |> List.filter (fun p -> p <> game.Me)
+            |> List.map (fun player ->
+                (player, Minimax.create
+                    heuristic
+                    (fun s p -> if p = game.Me then [||] else getUnclaimedEdges s p)
+                    (fun p -> p = player)))
+        let scores =
+            setups
+            |> List.map (fun (p, m) -> (p, Minimax.run m game game.Me depth |> Array.map snd |> Array.max))
+        let worstEnemy =
+            scores
+            |> List.maxBy snd
+            |> fst
+        let depth = int (Math.Min(game.NumPlayers * 5, maxDepth))
+        let m =
+            Minimax.create
+                heuristic
+                (fun s p -> if p <> game.Me && p <> worstEnemy then [||] else getUnclaimedEdges s p)
+                (fun p -> p = game.Me)
+        Minimax.run m game game.Me depth
+        |> Array.maxBy (fun (_, s) -> s)
+        |> fst
+        |> Option.get
+    )
