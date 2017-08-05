@@ -161,20 +161,23 @@ module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)
     let shortestPath (graph: Graph.T) (source: int): int array =
         let distances = Array.create (Graph.nVertices graph) -1 in
-        let inQueue = Array.create (Graph.nVertices graph) false in
-        let q = new Queue<int>() in
-        let enqueue x dist = begin
-            q.Enqueue x
-            inQueue.[x] <- true
-            distances.[x] <- dist
+        let work = new Queue<int>() in
+
+        let enqueueIfNeed x dist = begin
+            if distances.[x] <> -1 then ()
+            else 
+                work.Enqueue x
+                distances.[x] <- dist
         end 
-        enqueue source 0
-        while q.Count <> 0 do
-            let current = q.Dequeue () in
+
+        enqueueIfNeed source 0
+
+        while work.Count <> 0 do
+            let current = work.Dequeue () in
             for next in Graph.adjacent graph current do
-                if not inQueue.[next]
-                then
-                    enqueue next (distances.[current] + 1)
+                assert (distances.[current] <> -1)
+                enqueueIfNeed next (distances.[current] + 1)
+
         distances
 
     let shortestPaths (graph: Graph.T): Map<int, int array> =
