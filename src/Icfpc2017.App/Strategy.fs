@@ -11,7 +11,7 @@ type T = {
 let stateless name f = { name = name; init = fun _ -> f }
 let withSetup name setup step = { name = name; init = fun initialGraph -> let data = setup initialGraph in fun game -> step data game }
 
-let private maxByWeight (graph: Graphs.Graph.T) (weight: Graphs.Edge.T -> int) =
+let private maxByWeight (graph: Graphs.Graph.T) (weight: Graphs.Edge.T -> 'a when 'a: comparison) =
     Graphs.Graph.unclaimed graph |> Seq.maxBy weight
 
 let randomEdge = 
@@ -78,6 +78,8 @@ let bruteForce3 =
         let me = game.Me
         let weight (edge: Graphs.Edge.T) =
             let graph = Graphs.Graph.claimEdge graph me (Graphs.Edge.id edge)
+            let reach = Graphs.Traversal.shortestPaths (Graphs.Graph.subgraph graph me)
+            let tieScore = Game.score2 {game with Game.Graph2 = graph } dists reach
             Graphs.Graph.unclaimed graph
             |> Seq.map (fun edge -> 
                 let graph = Graphs.Graph.claimEdge graph me (Graphs.Edge.id edge)
@@ -92,6 +94,7 @@ let bruteForce3 =
             )
             |> makeNotEmpty
             |> Seq.max
+            |> (fun score -> (score, tieScore))
         in
         maxByWeight graph weight
     )
