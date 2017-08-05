@@ -11,10 +11,10 @@ module SerializationTests =
             serialize (Handshake { me = "llama" }),
             Is.EqualTo(@"{""me"":""llama""}"))
         Assert.That(
-            serialize (Ready {ready = 0; state = None; futures=[|{source = 0; target = 1}|]}),
+            serialize (Ready {ready = 0; state = None; futures=[|{source = 0u; target = 1u}|]}),
             Is.EqualTo(@"{""ready"":0,""futures"":[{""source"":0,""target"":1}]}"))
         Assert.That(
-            serialize (Move {move=Claim { punter = 0; source = 0; target = 1 }; state=None}),
+            serialize (Move {move=Claim { punter = 0; source = 0u; target = 1u }; state=None}),
             Is.EqualTo(@"{""claim"":{""punter"":0,""source"":0,""target"":1}}"))
         Assert.That(
             serialize (Move {move=Pass { punter = 0 }; state=None}),
@@ -36,9 +36,9 @@ module SerializationTests =
                     punters = 1
                     map =
                         {
-                            sites = [| { id = 0; coords = None }; { id = 1; coords = Some ({ x = -1.5; y = 0.5 }) } |]
-                            rivers = [| { source = 0; target = 1 } |]
-                            mines = [| 0; 1 |]
+                            sites = [| { id = 0u; coords = None }; { id = 1u; coords = Some ({ x = -1.5; y = 0.5 }) } |]
+                            rivers = [| { source = 0u; target = 1u } |]
+                            mines = [| 0u; 1u |]
                         }
                     settings = { futures = true }
                 }))
@@ -64,7 +64,7 @@ module SerializationTests =
                         {
                             moves =
                                 [|
-                                    Claim { punter = 0; source = 0; target = 0 }
+                                    Claim { punter = 0; source = 0u; target = 0u }
                                     Pass { punter = 0 }
                                 |]
                         }
@@ -78,7 +78,7 @@ module SerializationTests =
                         {
                             moves =
                                 [|
-                                    Claim { punter = 0; source = 0; target = 0 }
+                                    Claim { punter = 0; source = 0u; target = 0u }
                                     Pass { punter = 0 }
                                 |]
                             scores =

@@ -18,23 +18,20 @@ type Index<'a when 'a : comparison> = {
     member x.i (key: 'a) = x.eToI.[key]
     member x.e (key: int) = x.iToE.[key]
 
-type VertexId = int
+type VertexId = ProtocolData.VertexId
 type Color = int
 
 type State = {
-    Graph2: Graph2.T   
+    Graph2: Graph2.T
     VIndex: Index<VertexId>
     Me: Color
     NumPlayers: int
     Settings: ProtocolData.Settings
 }
 
-let unbox (u, v) = (int u, int v)
-
 let applyClaim state (claim: ProtocolData.Claim) =
-    let edge = (claim.source, claim.target)
     let edge2 = (state.VIndex.i(claim.source), state.VIndex.i(claim.target))
-    let eid = Graph2.fromOriginalEnds state.Graph2 edge2 |> Edge2.id
+    let eid = Graph2.edgeId state.Graph2 edge2
     if claim.punter = state.Me
     then
         {state with
@@ -45,28 +42,18 @@ let applyClaim state (claim: ProtocolData.Claim) =
 
 let private applyClaims state claims = List.fold applyClaim state claims
 
-let initialState (setup: ProtocolData.SetupIn ) =
-    let verts =
-        setup.map.sites
-        |> Array.map (fun {id = id; coords = coords} ->
-            Graphs.Vertex.create id (Array.contains id setup.map.mines) (Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords ))
-    
-    let edges = setup.map.rivers
-                |> Array.map (fun site -> (site.source, site.target))
+let initialState (setup: ProtocolData.SetupIn ) =   
+    let coords = 
+        setup.map.sites 
+        |> Array.map (fun {coords=coords} -> coords |> Option.map (fun c -> (c.x, c.y)))
 
-    let vIndex = Array.map (Graphs.Vertex.id) verts |> Index.create
-
-    let nVertices = Array.length verts
-    let sources =
-        {0..nVertices - 1}
-        |> Seq.filter (fun vi -> Graphs.Vertex.isSource verts.[vi])
-        |> Seq.toArray
-    let edges2 =
-        Array.map (fun (u, v) -> (vIndex.i(u), vIndex.i(v))) edges
-
-    let G2 = Graph2.create (verts |> Array.map Graphs.Vertex.coords) sources edges2
+    let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
+    let sources = setup.map.mines |> Array.map (fun vid -> vIndex.i(vid))    
+    let edges = 
+        setup.map.rivers
+        |> Array.map (fun site -> (vIndex.i(site.source), vIndex.i(site.target)))   
     {
-        Graph2 = G2
+        Graph2 = Graph2.create coords sources edges
         VIndex = vIndex
         Me = setup.punter
         NumPlayers = setup.punters

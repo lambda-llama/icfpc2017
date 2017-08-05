@@ -56,9 +56,10 @@ let offline (strategy: Strategy.T) =
        | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
          let currState = JsonConvert.DeserializeObject state :?> Game.State
          let nextState = Game.applyMoveIn currState moveIn
-         let (source, target) = strategy.init (currState.Graph2 (* TODO: precompute me*)) nextState |> Graphs.Graph.originalEnds currState.Graph2
-         let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
-         Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})          
+         let (source, target) = strategy.init (currState.Graph2 (* TODO: precompute me*)) nextState |> Graphs.Edge.ends
+         (* let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
+         Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})           *)
+         ()
        | _ -> ()      
        Pipe.close p
 

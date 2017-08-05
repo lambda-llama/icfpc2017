@@ -5,8 +5,8 @@ let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Gam
     if nStep = totalSteps then game
     else 
         printf "Step %d: %s\n" nStep name
-        let (u, v) = step { game with Me = me } |> Graphs.Graph.originalEnds game.Graph2
-        let nextState = Game.applyClaim game { punter = me; source = u; target = v }
+        let (u, v) = step { game with Me = me } |> Graphs.Edge.ends
+        let nextState = Game.applyClaim game { punter = me; source = uint32 u; target = uint32 v }
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
 
 

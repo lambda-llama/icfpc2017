@@ -16,25 +16,27 @@ type HandshakeIn = {
 
 // 1. Setup
 
+type VertexId = uint32
+
 type Coords = {
     x : float
     y : float
 }
 
 type Site = {
-    id : int
+    id : VertexId
     coords : Coords option
 }
 
 type River = {
-    source : int
-    target : int
+    source : VertexId
+    target : VertexId
 }
 
 type Map = {
     sites : Site array
     rivers : River array
-    mines : int array
+    mines : VertexId array
 }
 
 type Settings = {
@@ -58,8 +60,8 @@ type SetupOut = {
 
 type Claim = {
     punter : int
-    source : int
-    target : int
+    source : VertexId
+    target : VertexId
 }
 
 type Pass = {
@@ -283,21 +285,21 @@ let deserializeCoords (o : JObject) : Coords option =
 
 let deserializeSite (o : JObject) : Site =
     {
-        id = o.["id"].ToObject<int>()
+        id = o.["id"].ToObject<VertexId>()
         coords = o |> deserializeCoords
     }
 
 let deserializeRiver (o : JObject) : River =
     {
-        source = o.["source"].ToObject<int>()
-        target = o.["target"].ToObject<int>()
+        source = o.["source"].ToObject<VertexId>()
+        target = o.["target"].ToObject<VertexId>()
     }
 
 let deserializeMap (o : JObject) : Map =
     {
         sites = convertArray o.["sites"] deserializeSite
         rivers = convertArray o.["rivers"] deserializeRiver
-        mines = convertArray o.["mines"] (fun (v : JToken) -> v.ToObject<int>())
+        mines = convertArray o.["mines"] (fun (v : JToken) -> v.ToObject<VertexId>())
     }
 
 let deserializeSettings (o : JObject) =
@@ -332,8 +334,8 @@ let deserializeMove (o : JObject) : Move =
     | "claim" ->
         Claim {
             punter = v.["punter"].ToObject<int>()
-            source = v.["source"].ToObject<int>()
-            target = v.["target"].ToObject<int>()
+            source = v.["source"].ToObject<VertexId>()
+            target = v.["target"].ToObject<VertexId>()
         }
     | "pass" ->
         Pass {
@@ -349,8 +351,8 @@ let deserializeMoveOut (o : JObject) : MoveOut =
         | "claim" ->
             Claim {
                 punter = v.["punter"].ToObject<int>()
-                source = v.["source"].ToObject<int>()
-                target = v.["target"].ToObject<int>()
+                source = v.["source"].ToObject<VertexId>()
+                target = v.["target"].ToObject<VertexId>()
             }
         | "pass" ->
             Pass {

@@ -105,17 +105,10 @@ module Graph =
         | Some color -> color = punter
         | None -> false
 
-    let fromOriginalEnds (graph: T) (u, v): Edge.T = 
-        let iu = Array.findIndex (fun x -> Vertex.id x = u) graph.Vertices
-        let iv = Array.findIndex (fun x -> Vertex.id x = v) graph.Vertices
-        let (iu, iv) = (min iu iv, max iu iv)
-        Array.find (fun e -> Edge.ends e = (iu, iv)) graph.Edges
+    let edgeId {Edges=es} uv = 
+        Array.find (fun e -> Edge.ends e = uv) es |> Edge.id
 
-    let originalEnds (graph: T) (e: Edge.T) = 
-        let (iu, iv) = Edge.ends e
-        (Vertex.id graph.Vertices.[iu], Vertex.id graph.Vertices.[iv])
-
-    let edgeColor graph e = graph.Colors.TryFind (Edge.id e)
+    let edgeColor {Colors=cs} e = cs.TryFind (Edge.id e)
 
     let private colors = [|
         "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink"; 
@@ -145,7 +138,7 @@ module Graph =
             sprintf "  %d [label=\"%d\", shape=\"%s\"%s];" id id shape position
         in
         let renderEdge (e: Edge.T) =
-            let (u, v) = originalEnds graph e
+            let (u, v) = Edge.ends e
             let (color: string, width: int) =
                 match edgeColor graph e with
                 | Some(idx) when idx = we -> ("red", 3)
