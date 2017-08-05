@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <Compile Include="SerializationTests.fs" />
-    <Compile Include="BFSTests.fs" />
+    <Compile Include="TraversalTests.fs" />
   </ItemGroup>
 
   <ItemGroup>

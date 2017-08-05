@@ -28,5 +28,5 @@ let Compute (graph: Graph.T) =
         |> Array.map (fun source ->
             let distances = Array.create graph.Verts.Length -1 in
             BFS graph source.Id distances
-            (int source.Id, distances))
+            (source.Id, distances))
         |> Map.ofArray

@@ -3,7 +3,7 @@ module Game
 type State = {
     Graph: Graph.T
     Me: Graph.Color
-    BFSDist: Map<int, int[]>
+    BFSDist: Map<Graph.VertexId, int[]>
     Union: FastUnion.T
 }
 

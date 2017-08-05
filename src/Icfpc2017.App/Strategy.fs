@@ -51,7 +51,7 @@ let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
         in
 
         let {Graph.Ends=ends} =
-            Graph.outEdges graph mine
+            Graph.outEdges graph (uint32 mine)
             (* TODO: pick the most remote one. *)
             |> List.find (fun _ -> true)
         in ends
@@ -64,10 +64,10 @@ let bruteForceOneStep: T = fun game ->
         | Some c -> c = me
         | None -> false
     in
-    let dists = ShortestPath.Compute graph (Graph.sources graph) in
+    let dists = ShortestPath.Compute graph in
     let weight (edge: Graph.Edge) =
         let graph = Graph.claimEdge graph me edge.Ends in
-        let reach = ShortestPath.Compute {graph with Graph.Edges = List.filter isOurEdge graph.Edges} (Graph.sources graph) in
+        let reach = ShortestPath.Compute {graph with Graph.Edges = List.filter isOurEdge graph.Edges} in
         let s = Game.score {game with Game.Graph = graph } dists reach in
         s
     in

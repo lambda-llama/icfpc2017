@@ -13,6 +13,7 @@
     <Compile Include="FastUnion.fs" />
     <Compile Include="Game.fs" />
     <Compile Include="Strategy.fs" />
+    <Compile Include="Graphs.fs" />
     <Compile Include="Pipe.fs" />
     <Compile Include="Server.fs" />
     <Compile Include="Program.fs" />
