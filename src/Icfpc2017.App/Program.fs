@@ -57,7 +57,7 @@ let runSimulation mapName =
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
     let competitors = [
         Strategy.bruteForce1
-        Strategy.bruteForce3
+        // Strategy.bruteForce3
         Strategy.growFromMines
         Strategy.randomEdge
     ]
