@@ -37,10 +37,15 @@ type Map = {
     mines : int array
 }
 
+type Settings = {
+    futures : bool
+}
+
 type SetupIn = {
     punter : int
     punters : int
     map : Map
+    settings : Settings
 }
 
 type SetupOut = {
@@ -150,11 +155,16 @@ let serializeMap (m : Map) : JObject =
         JProperty("rivers", serializeArray m.rivers serializeRiver),
         JProperty("mines", serializeArray m.mines (fun m -> m)))
 
+let serializeSettings (s : Settings) : JObject =
+    JObject(
+        JProperty("futures", s.futures))
+
 let serializeSetupIn (s : SetupIn) : JObject =
     JObject(
         JProperty("punter", s.punter),
         JProperty("punters", s.punters),
-        JProperty("map", serializeMap s.map))
+        JProperty("map", serializeMap s.map),
+        JProperty("settings", serializeSettings s.settings))
 
 let serializeSetupOut (s : SetupOut) : JObject =
     match s.state with 
@@ -287,6 +297,13 @@ let deserializeMap (o : JObject) : Map =
         mines = convertArray o.["mines"] (fun (v : JToken) -> v.ToObject<int>())
     }
 
+let deserializeSettings (o : JObject) =
+    if o = null then { futures = false }
+    else
+    {
+        futures = o.["futures"].ToObject<bool>()
+    }
+
 let deserializeState (o : JObject) = 
     if o.["state"] = null then None else Some (o.["state"].ToObject<string> ())
 
@@ -295,6 +312,7 @@ let deserializeSetupIn (o : JObject) : SetupIn =
         punter = o.["punter"].ToObject<int>()
         punters = o.["punters"].ToObject<int>()
         map = (o.["map"] :?> JObject) |> deserializeMap
+        settings = (o.["settings"] :?> JObject) |> deserializeSettings
     }
 
 let deserializeSetupOut (o : JObject) : SetupOut =

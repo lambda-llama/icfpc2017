@@ -14,7 +14,8 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
     let (setup: ProtocolData.SetupIn) = 
         { punter = -1;
           punters = List.length strats;
-          map = map } in
+          map = map;
+          settings = { futures = false } } in
     let state = Game.initialState setup
     let nSteps = Array.length map.rivers
     let initStrat i (t: Strategy.T) = (i, t.name, t.init state.Graph2)

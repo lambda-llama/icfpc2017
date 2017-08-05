@@ -11,7 +11,7 @@ module SerializationTests =
             serialize (Handshake { me = "llama" }),
             Is.EqualTo(@"{""me"":""llama""}"))
         Assert.That(
-            serialize (Move {move=Ready { ready = 0 }; state = None ),
+            serialize (Ready {ready = 0; state = None }),
             Is.EqualTo(@"{""ready"":0}"))
         Assert.That(
             serialize (Move {move=Claim { punter = 0; source = 0; target = 1 }; state=None}),
@@ -29,7 +29,7 @@ module SerializationTests =
                     you = "llama"
                 }))
         Assert.That(
-            deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [{""id"": 0}, {""id"": 1, ""x"": -1.5, ""y"": 0.5}], ""rivers"": [{""source"": 0, ""target"": 1}], ""mines"": [0, 1]}}",
+            deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [{""id"": 0}, {""id"": 1, ""x"": -1.5, ""y"": 0.5}], ""rivers"": [{""source"": 0, ""target"": 1}], ""mines"": [0, 1]}, ""settings"": {""futures"": true}}",
             Is.EqualTo(
                 Setup {
                     punter = 0
@@ -40,6 +40,21 @@ module SerializationTests =
                             rivers = [| { source = 0; target = 1 } |]
                             mines = [| 0; 1 |]
                         }
+                    settings = { futures = true }
+                }))
+        Assert.That(
+            deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [], ""rivers"": [], ""mines"": []}}",
+            Is.EqualTo(
+                Setup {
+                    punter = 0
+                    punters = 1
+                    map =
+                        {
+                            sites = [||]
+                            rivers = [||]
+                            mines = [||]
+                        }
+                    settings = { futures = false }
                 }))
         Assert.That(
             deserialize @"{""move"": {""moves"":[{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}]}}",
@@ -53,7 +68,8 @@ module SerializationTests =
                                     Pass { punter = 0 }
                                 |]
                         }
-                    }))
+                    state = None
+                }))
         Assert.That(
             deserialize @"{""stop"": {""moves"": [{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}], ""scores"":[{""punter"": 0, ""score"": 42}]}}",
             Is.EqualTo(
