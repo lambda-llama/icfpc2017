@@ -5,7 +5,7 @@ open Game
 open Graphs
 
 let isSource (graph: Graphs.Graph.T) vertex =
-    (Graphs.Graph.vertices graph).[vertex].IsSource
+    (Graphs.Graph.vertices graph).[vertex] |> Vertex.isSource
 
 let outEdges (graph: Graphs.Graph.T) vertex: Edge.T array =
     (Graph.edges graph)
@@ -32,9 +32,7 @@ let heuristic (game: State): int =
     let dists = Traversal.shortestPaths graph
     let reaches =
         [0..game.NumPlayers - 1]
-        |> List.map
-            (fun p ->
-                Traversal.shortestPaths (Graph.withEdges graph (Array.filter (Graph.isClaimedBy p graph) (Graph.edges graph))))
+        |> List.map (fun p -> Traversal.shortestPaths (Graph.subgraph graph p))
     let scores =
         reaches
         |> List.map (fun r -> Game.score2 game dists r)
