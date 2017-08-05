@@ -83,8 +83,10 @@ module Graph =
     let nVertices = vertices >> Array.length
     let nEdges = edges >> Array.length
 
-    let incident {Edges=es} vid =
-        Array.filter (fun e -> Edge.contains e vid) es
+    let adjacent {Edges=es} vid =
+        es
+        |> Array.filter (fun e -> Edge.contains e vid)
+        |> Array.map (fun e -> Edge.opposite e vid)
 
     let claimEdge {Edges=es} eid punter =
         es.[eid] <- Edge.claim es.[eid] punter
@@ -99,7 +101,6 @@ module Graph =
         let e = Edge.create (externalToVid g u, externalToVid g v) in
         Array.findIndex ((=) e) es
 
-
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)
     let shortestPath (graph: Graph.T) (source: int): int array =
@@ -111,8 +112,7 @@ module Traversal =
         while q.Count <> 0 do
             let current = q.Dequeue () in
             seen.[current] <- true
-            for edge in Graph.incident graph current do
-                let next = Edge.opposite edge current in
+            for next in Graph.adjacent graph current do                
                 if not seen.[next]
                 then
                     distances.[next] <- distances.[current] + 1
