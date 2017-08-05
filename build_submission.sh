@@ -20,10 +20,9 @@ cp $STATIC_DIR/* $OUTPUT_DIR/
 
 pushd $APP_SRC_DIR > /dev/null
 dotnet restore
-dotnet build -c Release
+dotnet publish -c Release -o $OUTPUT_BIN_DIR
 popd > /dev/null
 
-cp $APP_BIN_DIR/* $OUTPUT_BIN_DIR/
 cp -r $APP_SRC_DIR/*.fs* $OUTPUT_SRC_DIR/
 
 pushd $OUTPUT_DIR > /dev/null
