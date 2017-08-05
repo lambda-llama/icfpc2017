@@ -1,0 +1,7 @@
+#! /bin/bash
+
+cat > punter <<EOF
+#! /bin/bash
+dotnet bin/Icfpc2017.App.dll \$*
+EOF
+chmod +x punter

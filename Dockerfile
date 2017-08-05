@@ -15,3 +15,4 @@ RUN cd /tmp && \
     rm -rf proj
 
 ADD . /repo
+WORKDIR /repo
