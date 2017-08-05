@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <Compile Include="SerializationTests.fs" />
-    <Compile Include="FastUnionTest.fs" />
+    <!-- <Compile Include="FastUnionTest.fs" /> -->
   </ItemGroup>
 
   <ItemGroup>

@@ -2,7 +2,7 @@ module Strategies
 
 open MinimaxStrategy
 open Strategy
-open GreadyStrategy
+// open GreadyStrategy
 open MixedStrategy
 
 let all =
@@ -11,6 +11,6 @@ let all =
      (bruteForce1.name, bruteForce1);
      (bruteForce3.name, bruteForce3);
      (minimax.name, minimax);
-     (greadyStrategy.name, greadyStrategy);
+     // (greadyStrategy.name, greadyStrategy);
      (mixedStrategy.name, mixedStrategy)]
     |> Map.ofList
