@@ -269,11 +269,6 @@ let deserializeHandshakeIn (o : JObject) : HandshakeIn =
         you = o.["you"].ToObject<string>()
     }
 
-let deserializeHandshakeOut (o : JObject) : HandshakeOut =
-    {
-        me = o.["me"].ToObject<string>()
-    }
-
 let deserializeCoords (o : JObject) : Coords option =
     match o.["x"] with
     | null -> None
@@ -304,14 +299,14 @@ let deserializeMap (o : JObject) : Map =
     }
 
 let deserializeSettings (o : JObject) =
-    if o = null then { futures = false }
+    if isNull o then { futures = false }
     else
     {
         futures = o.["futures"].ToObject<bool>()
     }
 
 let deserializeState (o : JObject) =
-    if o.["state"] = null then None else Some (o.["state"].ToObject<string> ())
+    if isNull o.["state"] then None else Some (o.["state"].ToObject<string> ())
 
 let deserializeSetupIn (o : JObject) : SetupIn =
     {
@@ -319,13 +314,6 @@ let deserializeSetupIn (o : JObject) : SetupIn =
         punters = o.["punters"].ToObject<int>()
         map = (o.["map"] :?> JObject) |> deserializeMap
         settings = (o.["settings"] :?> JObject) |> deserializeSettings
-    }
-
-let deserializeSetupOut (o : JObject) : SetupOut =
-    {
-        ready = o.["ready"].ToObject<int>()
-        state = deserializeState o
-        futures = convertArray o.["Futures"] deserializeRiver
     }
 
 let deserializeMove (o : JObject) : Move =
@@ -343,24 +331,6 @@ let deserializeMove (o : JObject) : Move =
             punter = v.["punter"].ToObject<Color>()
         }
     | x -> raise (exn x)
-
-let deserializeMoveOut (o : JObject) : MoveOut =
-    let prop = o.Properties().First()
-    let v = prop.Value :?> JObject
-    let move =
-        match (prop.Name) with
-        | "claim" ->
-            Claim {
-                punter = v.["punter"].ToObject<Color>()
-                source = v.["source"].ToObject<VertexId>()
-                target = v.["target"].ToObject<VertexId>()
-            }
-        | "pass" ->
-            Pass {
-                punter = v.["punter"].ToObject<Color>()
-            }
-        | x -> raise (exn x)
-    in {move=move; state=deserializeState o}
 
 let deserializeMoves (o : JObject) : Moves =
     {
@@ -405,16 +375,5 @@ let deserializeMessageIn (o : JObject) : MessageIn =
     | "timeout" -> Timeout (deserializeTimeoutIn o)
     | x -> raise (exn x)
 
-let deserializeMessageOut (o : JObject) : MessageOut =
-    let prop = o.Properties().First()
-    match (prop.Name) with
-    | "me" -> Handshake (deserializeHandshakeOut o)
-    | "ready" -> Ready (deserializeSetupOut o)
-    | "claim" | "pass" -> Move (deserializeMoveOut o)
-    | x -> raise (exn x)
-
 let deserialize (message : string) : MessageIn =
     deserializeMessageIn (JsonConvert.DeserializeObject<JObject>(message))
-
-let serverDeserialize (message : string) : MessageOut =
-    deserializeMessageOut (JsonConvert.DeserializeObject<JObject>(message))
