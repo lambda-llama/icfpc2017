@@ -166,7 +166,7 @@ module Traversal =
         let enqueue x dist = begin
             q.Enqueue x
             inQueue.[x] <- true
-            distances.[source] <- dist
+            distances.[x] <- dist
         end 
         enqueue source 0
         while q.Count <> 0 do
@@ -175,10 +175,12 @@ module Traversal =
                 if not inQueue.[next]
                 then
                     enqueue next (distances.[current] + 1)
-
         distances
 
     let shortestPaths (graph: Graph.T): Map<int, int array> =
         Graph.sources graph
         |> Array.map (fun v -> (v, shortestPath graph v))
         |> Map.ofArray
+// bruteForce1 2424
+// bruteForce3 3313
+// minimax 2603
