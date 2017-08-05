@@ -6,7 +6,8 @@ type Color = int
 
 (* TODO: make private *)
 type Vertex = {
-    IsSource: bool;
+    Id: int
+    IsSource: bool
     Coords: (float * float) option
 }
 
@@ -46,7 +47,7 @@ module Graph =
         let vertices =
             [0..nVertices - 1]
             |> List.map (fun v -> sources |> Array.contains v)
-            |> List.map (fun s -> { IsSource = s; Coords = None })
+            |> List.mapi (fun i s -> { Id = i; IsSource = s; Coords = None })
             |> List.toArray
 
         {Vertices=vertices;
@@ -90,7 +91,7 @@ module Graph =
 
     let isClaimedBy punter {Colors=cs} edge: bool =
         match cs.TryFind (Edge.id edge) with
-        | Some color -> color <> punter
+        | Some color -> color = punter
         | None -> false
 
 module Traversal =

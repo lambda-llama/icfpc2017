@@ -91,6 +91,15 @@ let score game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, in
             if reach.[u.Id].[int v.Id] <> -1 then total <- total + d * d
     total  
 
+let score2 game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, int[]>) =
+    let isSource { Graphs.Vertex.IsSource = s } = s
+    let (sources, sinks) = Array.partition isSource (Graphs.Graph.vertices game.Graph2)
+    let mutable total = 0
+    for u in sources do
+        for v in sinks do
+            let d = dist.[u.Id].[v.Id]
+            if reach.[u.Id].[v.Id] <> -1 then total <- total + d * d
+    total
 
 type Renderer = {
     directory: string;
