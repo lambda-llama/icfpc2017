@@ -1,34 +1,35 @@
 module MinimaxStrategy
 
 open System
+
 open Game
 open Graphs
 
-let isSource (graph: Graphs.Graph.T) vertex =
-    (Graphs.Graph.vertices graph).[vertex] |> Vertex.isSource
+let isSource (graph: Graph.T) vertex =
+    (Graph.vertices graph).[vertex] |> Vertex.isSource
 
-let outEdges (graph: Graphs.Graph.T) vertex: Edge.T array =
+let outEdges (graph: Graph.T) vertex: Edge.T array =
     (Graph.edges graph)
     |> Array.filter (fun e -> Edge.contains e vertex)
 
-let isUnclaimedEdge (graph: Graphs.Graph.T) (edge: Edge.T): bool =
+let isUnclaimedEdge (graph: Graph.T) (edge: Edge.T): bool =
     Graph.isClaimed graph edge |> not
 
 let isConnected (game: State) vertex: bool =
-    isSource game.Graph2 vertex ||
-        outEdges game.Graph2 vertex
-        |> Array.exists (isUnclaimedEdge game.Graph2 >> not)
+    isSource game.Graph vertex ||
+        outEdges game.Graph vertex
+        |> Array.exists (isUnclaimedEdge game.Graph >> not)
 
 let getUnclaimedEdges (game: State) (player: Color): Edge.T array =
-    (Graphs.Graph.edges game.Graph2)
-    |> Array.filter (isUnclaimedEdge game.Graph2)
+    (Graph.edges game.Graph)
+    |> Array.filter (isUnclaimedEdge game.Graph)
     |> Array.filter
         (fun e ->
             let (a, b) = Edge.ends e
             isConnected game a || isConnected game b)
 
 let heuristic (game: State): int =
-    let graph = game.Graph2
+    let graph = game.Graph
     let dists = Traversal.shortestPaths graph
     let reaches =
         [0..game.NumPlayers - 1]
@@ -64,7 +65,7 @@ module Minimax =
             match edge with
             | Some edge ->
                 let eid = Edge.id edge
-                { state with Graph2 = Graph.claimEdge state.Graph2 player eid }
+                { state with Graph = Graph.claimEdge state.Graph player eid }
             | None -> state // pass
         let nextPlayer = (player + 1) % state.NumPlayers
 
@@ -103,8 +104,8 @@ module Minimax =
 let minimax =
     Strategy.stateless "minimax" (fun game ->
         let maxDepth =
-            (Graph.edges game.Graph2)
-            |> Array.filter (isUnclaimedEdge game.Graph2)
+            (Graph.edges game.Graph)
+            |> Array.filter (isUnclaimedEdge game.Graph)
             |> Array.length
         let depth = int (Math.Min(10, maxDepth))
         let m =
@@ -121,8 +122,8 @@ let minimax =
 let minimax2 =
     Strategy.stateless "minimax2" (fun game ->
         let maxDepth =
-            (Graph.edges game.Graph2)
-            |> Array.filter (isUnclaimedEdge game.Graph2)
+            (Graph.edges game.Graph)
+            |> Array.filter (isUnclaimedEdge game.Graph)
             |> Array.length
         // Find worst enemy - our move is the first, so try to maximize each enemy's potential threat
         let depth = int (Math.Min(game.NumPlayers * 2, maxDepth))

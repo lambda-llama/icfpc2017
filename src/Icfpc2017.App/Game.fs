@@ -1,8 +1,6 @@
 module Game
 
-module Graph2 = Graphs.Graph
-module Vertex2 = Graphs.Vertex
-module Edge2 = Graphs.Edge
+open Graphs
 
 (* Mapping from external to internal IDs. *)
 type Index<'a when 'a : comparison> = {
@@ -22,7 +20,7 @@ type VertexId = ProtocolData.VertexId
 type Color = ProtocolData.Color
 
 type State = {
-    Graph2: Graph2.T
+    Graph: Graph.T
     VIndex: Index<VertexId>
     Me: Color
     NumPlayers: int
@@ -30,25 +28,25 @@ type State = {
 }
 
 let applyClaim state (claim: ProtocolData.Claim) =
-    let edge2 = (state.VIndex.i(claim.source), state.VIndex.i(claim.target))
-    let eid = Graph2.edgeId state.Graph2 edge2
+    let Edge = (state.VIndex.i(claim.source), state.VIndex.i(claim.target))
+    let eid = Graph.edgeId state.Graph Edge
     {state with
-       Graph2 = Graph2.claimEdge state.Graph2 claim.punter eid}
+       Graph = Graph.claimEdge state.Graph claim.punter eid}
 
 let private applyClaims state claims = List.fold applyClaim state claims
 
-let initialState (setup: ProtocolData.SetupIn ) =   
-    let coords = 
-        setup.map.sites 
+let initialState (setup: ProtocolData.SetupIn ) =
+    let coords =
+        setup.map.sites
         |> Array.map (fun s -> s.coords |> Option.map (fun c -> (c.x, c.y)))
 
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
-    let sources = setup.map.mines |> Array.map (fun vid -> vIndex.i(vid))    
-    let edges = 
+    let sources = setup.map.mines |> Array.map (fun vid -> vIndex.i(vid))
+    let edges =
         setup.map.rivers
-        |> Array.map (fun site -> (vIndex.i(site.source), vIndex.i(site.target)))   
+        |> Array.map (fun site -> (vIndex.i(site.source), vIndex.i(site.target)))
     {
-        Graph2 = Graph2.create coords sources edges
+        Graph = Graph.create coords sources edges
         VIndex = vIndex
         Me = setup.punter
         NumPlayers = setup.punters
@@ -64,12 +62,12 @@ let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
     |> applyClaims state
 
 let score2 game (dist: Map<int, int[]>) (reach: Map<int, int[]>) =
-    let (sources, sinks) = Array.partition Vertex2.isSource (Graph2.vertices game.Graph2)
+    let (sources, sinks) = Array.partition Vertex.isSource (Graph.vertices game.Graph)
     let mutable total = 0
     for u in sources do
-        let uid = Vertex2.id u
+        let uid = Vertex.id u
         for v in sinks do
-            let vid = Vertex2.id v
+            let vid = Vertex.id v
             let d = dist.[uid].[vid]
             if reach.[uid].[vid] <> -1 then total <- total + d * d
     total
@@ -86,6 +84,6 @@ type Renderer = {
     member this.dump (game: State) =
         let dot = sprintf "%s/%d.dot" this.directory this.count in
         let svg = sprintf "%s/_%d.svg" this.directory this.count in
-        System.IO.File.WriteAllText(dot, (Graphs.Graph.toDot game.Me game.Graph2))
+        System.IO.File.WriteAllText(dot, (Graph.toDot game.Me game.Graph))
         use p = System.Diagnostics.Process.Start("dot", sprintf "-Kfdp -n -Tsvg %s -o %s" dot svg)
         this.count <- this.count + 1
