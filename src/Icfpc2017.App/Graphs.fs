@@ -47,24 +47,34 @@ module Graph =
         Sources: int array
         Edges: Edge.T array
         Colors: Map<int, Color>
+        AdjacentEdges: Edge.T array array
     }
+
+    let private buildAdjacentEdges vertices edges =
+        vertices
+        |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
 
     (** Simplified [create] intended ONLY for test use. *)
     let testCreate nVertices sources uvs: T =
         let vertices = Array.init nVertices (fun vid ->
             Vertex.create vid (Array.contains vid sources) None)
+        let edges = Array.mapi Edge.create uvs
+
         {Vertices=vertices;
          Sources=sources;
-         Edges=Array.mapi Edge.create uvs;
-         Colors=Map.empty}
+         Edges=edges;
+         Colors=Map.empty;
+         AdjacentEdges=buildAdjacentEdges vertices edges}
 
     let create vertices edges: T =
         let sources = vertices |> Array.choose (fun v ->
             if Vertex.isSource v then Some (Vertex.id v) else None)
+
         {Vertices=vertices;
          Sources=sources;
          Edges=edges;
-         Colors=Map.empty}
+         Colors=Map.empty;
+         AdjacentEdges=buildAdjacentEdges vertices edges}
 
     let vertices {Vertices=vertices} = vertices
     let sources {Sources=sources} = sources
@@ -87,10 +97,9 @@ module Graph =
         let subEdges =
             g.Edges
             |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors)
-        {g with Edges=subEdges; Colors=subColors}
+        {g with Edges=subEdges; Colors=subColors; AdjacentEdges=buildAdjacentEdges (vertices g) subEdges}
 
-    let adjacentEdges {Edges=es} vid =
-        Array.toSeq es |> Seq.filter (fun e -> Edge.contains e vid)
+    let adjacentEdges {AdjacentEdges=adj} vid = adj.[vid]
 
     let adjacent g vid =
         adjacentEdges g vid |> Seq.map (fun e -> Edge.opposite e vid)
