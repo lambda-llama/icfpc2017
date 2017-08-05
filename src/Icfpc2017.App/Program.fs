@@ -14,13 +14,13 @@ let handshake (p: Pipe.T): unit =
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
     fun (initialState: Game.State) ->
-        let step = strategy.init initialState.Graph
+        let step = strategy.init initialState.Graph2
         let rec go currState =
             rend.dump currState
             match Pipe.read p with
             | ProtocolData.RequestMove moves ->
               let nextState = Game.applyMoveIn currState moves
-              let (source, target) = step nextState
+              let (source, target) = Graphs.Edge.ends (step nextState)
               let nextMove = ProtocolData.Claim {punter=punter; source=source; target=target}
               let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
               go nextState
@@ -52,7 +52,7 @@ let offline (strategy: Strategy.T) =
        | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
          let currState = JsonConvert.DeserializeObject state :?> Game.State
          let nextState = Game.applyMoveIn currState moveIn
-         let (source, target) = strategy.init (currState.Graph (* TODO: precompute me*)) nextState
+         let (source, target) = strategy.init (currState.Graph2 (* TODO: precompute me*)) nextState |> Graphs.Edge.ends
          let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
          Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})          
        | _ -> ()      

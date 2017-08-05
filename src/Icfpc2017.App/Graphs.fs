@@ -79,6 +79,11 @@ module Graph =
         |> Array.filter (fun e -> Edge.contains e vid)
         |> Array.map (fun e -> Edge.opposite e vid)
 
+    let adjacentEdges {Edges=es} vid =
+        es
+        |> Array.toSeq
+        |> Seq.filter (fun e -> Edge.contains e vid)
+
     let unclaimed {Edges=es; Colors=colors}: Edge.T seq = 
         Array.toSeq es
         |> Seq.filter (fun e -> not (Map.containsKey (Edge.id e) colors))

@@ -1,11 +1,11 @@
 module Simulation
 
-let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Graph.Color * string * (Game.State -> (Graph.VertexId * Graph.VertexId))) list) = 
+let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Graph.Color * string * (Game.State -> (Graphs.Edge.T))) list) = 
     let (me, name, step) = List.head punters
     if nStep = totalSteps then game
     else 
         printf "Step %d: %s\n" nStep name
-        let (u, v) = step { game with Me = me }
+        let (u, v) = step { game with Me = me } |> Graphs.Edge.ends
         let nextState = Game.applyClaim game { punter = me; source = u; target = v }
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
 
@@ -17,7 +17,7 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
           map = map } in
     let state = Game.initialState setup
     let nSteps = Array.length map.rivers
-    let initStrat i (t: Strategy.T) = (i, t.name, t.init state.Graph)
+    let initStrat i (t: Strategy.T) = (i, t.name, t.init state.Graph2)
     let endGame = simulateSteps 0 nSteps state (List.mapi initStrat strats)
     let dists = ShortestPath.Compute (endGame.Graph)
     strats
