@@ -11,6 +11,7 @@ case $1 in
     re) ;&
     r)
     CONFIG=Release
+    shift
     ;;
     *)
     CONFIG=Debug
