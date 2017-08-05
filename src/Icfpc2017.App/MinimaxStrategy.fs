@@ -100,7 +100,7 @@ module Minimax =
         m.getMoves state player
         |> Array.map (fun e -> (e, minimax m state e player depth Int32.MinValue Int32.MaxValue))
 
-let minimax = 
+let minimax =
     Strategy.stateless "minimax" (fun game ->
         let maxDepth =
             (Graph.edges game.Graph2)

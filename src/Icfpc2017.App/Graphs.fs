@@ -49,6 +49,15 @@ module Graph =
         Colors: Map<int, Color>
     }
 
+    (** Simplified [create] intended ONLY for test use. *)
+    let testCreate nVertices sources uvs: T =
+        let vertices = Array.init nVertices (fun vid ->
+            Vertex.create vid (Array.contains vid sources) None)
+        {Vertices=vertices;
+         Sources=sources;
+         Edges=Array.mapi Edge.create uvs;
+         Colors=Map.empty}
+
     let create (vertCoords: (float * float) option array) sources uvs: T =
         let vertices =
             vertCoords
@@ -68,6 +77,13 @@ module Graph =
     let nVertices = vertices >> Array.length
     let nEdges = edges >> Array.length
 
+    let edgeId {Edges=es} uv =
+        (* XXX normalize ends. *)
+        let uv = Edge.create 0 uv |> Edge.ends
+        Array.find (fun e -> Edge.ends e = uv) es |> Edge.id
+
+    let edgeColor {Colors=cs} e = cs.TryFind (Edge.id e)
+
     (** Focus on a subgraph of a specific color. *)
     let subgraph (g : T) (color: Color): T =
         (* TODO: ideally just filter in [[adjacent]]. *)
@@ -77,36 +93,24 @@ module Graph =
             |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors)
         {g with Edges=subEdges; Colors=subColors}
 
-    let adjacent {Edges=es} vid =
-        Array.toSeq es
-        |> Seq.filter (fun e -> Edge.contains e vid)
-        |> Seq.map (fun e -> Edge.opposite e vid)
-
     let adjacentEdges {Edges=es} vid =
-        es
-        |> Array.toSeq
-        |> Seq.filter (fun e -> Edge.contains e vid)
+        Array.toSeq es |> Seq.filter (fun e -> Edge.contains e vid)
+
+    let adjacent g vid =
+        adjacentEdges g vid |> Seq.map (fun e -> Edge.opposite e vid)
+
+    let isClaimed {Colors=cs} edge: bool = cs.ContainsKey (Edge.id edge)
+
+    let isClaimedBy punter g edge: bool =
+        match edgeColor g edge with
+        | Some color -> color = punter
+        | None -> false
 
     let claimEdge ({Colors=cs} as g) punter eid: T =
         {g with Colors=Map.add eid punter cs}
 
-    let isClaimed {Colors=cs} edge: bool =
-        cs.ContainsKey (Edge.id edge)
-
-    let isClaimedBy punter {Colors=cs} edge: bool =
-        match cs.TryFind (Edge.id edge) with
-        | Some color -> color = punter
-        | None -> false
-
     let unclaimed ({Edges=es} as g): Edge.T seq =
         Array.toSeq es |> Seq.filter (isClaimed g >> not)
-
-    let edgeId {Edges=es} uv =
-        (* XXX normalize ends. *)
-        let uv = Edge.create 0 uv |> Edge.ends
-        Array.find (fun e -> Edge.ends e = uv) es |> Edge.id
-
-    let edgeColor {Colors=cs} e = cs.TryFind (Edge.id e)
 
     let private colors = [|
         "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink";
