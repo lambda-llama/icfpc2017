@@ -27,39 +27,42 @@ type State = {
     Settings: ProtocolData.Settings
 }
 
-let applyClaim state (claim: ProtocolData.Claim) =
-    let Edge = (state.VIndex.i(claim.source), state.VIndex.i(claim.target))
-    let eid = Graph.edgeId state.Graph Edge
-    {state with
-       Graph = Graph.claimEdge state.Graph claim.punter eid}
-
-let private applyClaims state claims = List.fold applyClaim state claims
-
 let initialState (setup: ProtocolData.SetupIn ) =
-    let coords =
-        setup.map.sites
-        |> Array.map (fun s -> s.coords |> Option.map (fun c -> (c.x, c.y)))
-
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
-    let sources = setup.map.mines |> Array.map (fun vid -> vIndex.i(vid))
+    let vertices =
+        setup.map.sites
+        |> Array.map (fun s ->
+            let vid = vIndex.i(s.id)
+            let isSource = Array.contains s.id setup.map.mines
+            let coords = s.coords |> Option.map (fun c -> (c.x, c.y))
+            Vertex.create vid isSource coords)
     let edges =
         setup.map.rivers
-        |> Array.map (fun site -> (vIndex.i(site.source), vIndex.i(site.target)))
+        |> Array.mapi (fun i r ->
+            let uv = (vIndex.i(r.source), vIndex.i(r.target))
+            Edge.create i uv)
     {
-        Graph = Graph.create coords sources edges
+        Graph = Graph.create vertices edges
         VIndex = vIndex
         Me = setup.punter
         NumPlayers = setup.punters
         Settings = setup.settings
     }
 
+
+let applyClaim s (claim: ProtocolData.Claim) =
+    let eid = (s.VIndex.i(claim.source), s.VIndex.i(claim.target))
+              |> Graph.edgeId s.Graph
+    {s with Graph = Graph.claimEdge s.Graph claim.punter eid}
+
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
-    moveIn.move.moves
-    |> Array.toList
-    |> List.choose (function
-        | ProtocolData.Claim claim -> Some claim
-        | ProtocolData.Pass _ -> None)
-    |> applyClaims state
+    Array.fold
+        (fun s move ->
+            match move with
+            | ProtocolData.Claim claim -> applyClaim s claim
+            | ProtocolData.Pass _ -> s)
+        state
+        moveIn.move.moves
 
 let score2 game (dist: Map<int, int[]>) (reach: Map<int, int[]>) =
     let (sources, sinks) = Array.partition Vertex.isSource (Graph.vertices game.Graph)

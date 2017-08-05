@@ -58,16 +58,12 @@ module Graph =
          Edges=Array.mapi Edge.create uvs;
          Colors=Map.empty}
 
-    let create (vertCoords: (float * float) option array) sources uvs: T =
-        let vertices =
-            vertCoords
-            |> Array.toSeq
-            |> Seq.mapi (fun vid coord -> Vertex.create vid (Array.contains vid sources) coord)
-            |> Seq.toArray
-
+    let create vertices edges: T =
+        let sources = vertices |> Array.choose (fun v ->
+            if Vertex.isSource v then Some (Vertex.id v) else None)
         {Vertices=vertices;
          Sources=sources;
-         Edges=Array.mapi Edge.create uvs;
+         Edges=edges;
          Colors=Map.empty}
 
     let vertices {Vertices=vertices} = vertices
