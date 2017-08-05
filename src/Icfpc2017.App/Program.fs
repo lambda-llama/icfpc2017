@@ -54,21 +54,16 @@ let offline strategy =
 let clientStart host port strategyName =
     online host port Strategies.all.[strategyName]
 
-let runSimulation () = 
-    let map = """{"sites":[{"id":4},{"id":1},{"id":3},{"id":6},{"id":5},{"id":0},{"id":7},{"id":2}],
-                  "rivers":[{"source":3,"target":4},{"source":0,"target":1},{"source":2,"target":3},
-                            {"source":1,"target":3},{"source":5,"target":6},{"source":4,"target":5},
-                            {"source":3,"target":5},{"source":6,"target":7},{"source":5,"target":7},
-                            {"source":1,"target":7},{"source":0,"target":7},{"source":1,"target":2}],
-                  "mines":[1,5]}"""
+let runSimulation mapName = 
+    let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
     let competitors = [Strategy.bruteForceOneStep; Strategy.randomEdge]
     let (scores: int list) = Simulation.simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
     printf "%A" scores
-    
 
 [<EntryPoint>]
 let main = function
-| [|"--sim"|] -> runSimulation (); 0
+| [|"--sim"; |] -> runSimulation "lambda"; 0
+| [|"--sim"; map |] -> runSimulation map; 0
 | [|"--server"; mapFilePath|] ->
     (* Server.start mapFilePath (7777); *) 0
 | [|"--local"; strategyName|] when Map.containsKey strategyName Strategies.all ->
@@ -80,5 +75,5 @@ let main = function
 | _ -> 
     Strategies.all |> Map.toSeq |> Seq.map fst
         |> String.concat "|"
-        |> printf "usage:\n%%prog%% <--local|PORT> <%s>\n%%prog%% --server MAP\n --sim"
+        |> printf "usage:\n%%prog%% <--local|PORT> <%s>\n%%prog%% --server MAP\n --sim [MAP]"
     1
