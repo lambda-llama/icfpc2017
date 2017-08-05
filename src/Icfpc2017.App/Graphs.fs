@@ -24,7 +24,7 @@ module Edge =
     }
 
     (* Enforces an invariant that the first vertex ID is smaller. *)
-    let create id uv = { id=id; uv=uv }
+    let create id (u, v) = {id=id; uv=(min u v, max u v)}
 
     let id { id=id } = id
     let ends { uv=uv } = uv

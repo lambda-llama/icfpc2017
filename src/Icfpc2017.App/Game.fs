@@ -2,6 +2,7 @@ module Game
 
 module Graph2 = Graphs.Graph
 module Vertex2 = Graphs.Vertex
+module Edge2 = Graphs.Edge
 
 (* Mapping from external to internal IDs. *)
 type Index<'a when 'a : comparison> = {
@@ -21,8 +22,8 @@ type VertexId = Graph.VertexId
 
 type State = {
     Graph: Graph.T
-    Graph2: Graph2.T
-    EIndex: (VertexId * VertexId) Index
+    Graph2: Graph2.T   
+    VIndex: Index<VertexId>
     Me: Graph.Color
     BFSDist: Map<VertexId, int[]>
     Union: FastUnion.T
@@ -30,12 +31,12 @@ type State = {
     Settings: ProtocolData.Settings
 }
 
-(* The edges must be ordered to make the lookup more robust. *)
-let ordered (u, v) = (min u v, max u v)
+let unbox (u, v) = (int u, int v)
 
 let applyClaim state (claim: ProtocolData.Claim) =
-    let edge = ordered (claim.source, claim.target)
-    let eid = state.EIndex.i(edge)
+    let edge = (claim.source, claim.target)
+    let edge2 = (state.VIndex.i(claim.source), state.VIndex.i(claim.target))
+    let eid = Graph2.fromOriginalEnds state.Graph2 edge2 |> Edge2.id
     if claim.punter = state.Me
     then
         let _ = state.Union.Unite claim.source, claim.target
@@ -58,10 +59,9 @@ let initialState (setup: ProtocolData.SetupIn ) =
               Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords })
     
     let edges = setup.map.rivers
-                |> Array.map (fun site -> ordered (site.source, site.target))
+                |> Array.map (fun site -> (site.source, site.target))
 
     let vIndex = Array.map (fun {Graph.Id=id} -> id) verts |> Index.create
-    let eIndex = Index.create edges
 
     let nVertices = Array.length verts
     let sources =
@@ -76,7 +76,7 @@ let initialState (setup: ProtocolData.SetupIn ) =
     {
         Graph = G
         Graph2 = G2
-        EIndex = eIndex
+        VIndex = vIndex
         Me = setup.punter
         BFSDist = ShortestPath.Compute G
         Union = FastUnion.T G
