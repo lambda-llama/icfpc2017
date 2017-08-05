@@ -56,7 +56,12 @@ let clientStart host port strategyName =
 
 let runSimulation mapName = 
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
-    let competitors = [Strategy.bruteForceOneStep; Strategy.randomEdge]
+    let competitors = [
+        Strategy.bruteForceOneStep
+        MinimaxStrategy.minimax
+        Strategy.growFromMines
+        Strategy.randomEdge
+    ]
     let (scores: int list) = Simulation.simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
     printf "%A" scores
 
