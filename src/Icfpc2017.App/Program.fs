@@ -24,7 +24,11 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
               let nextMove = ProtocolData.Claim {punter=punter; source=source; target=target}
               let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
               go nextState
-            | ProtocolData.Stop stop -> ()
+            | ProtocolData.Stop stop ->
+                    let sortedScores = stop.stop.scores |> Array.sortBy (fun x -> x.punter) 
+                                                        |> Array.map (fun x -> x.score)
+
+                    eprintf """{"sortedScores": "%A" "me": %A}\n""" (Array.toList sortedScores) punter
             | message -> failwithf "Unexpected response: %A\n" message        
         in go initialState
 
