@@ -84,5 +84,4 @@ let minimax =
         getUnclaimedEdges game
         |> Array.sortByDescending (fun e -> _minimax game e game.Me depth Int32.MinValue Int32.MaxValue)
         |> Array.find (fun _ -> true)
-        |> Edge.ends
     )
