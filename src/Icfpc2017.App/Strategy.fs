@@ -72,3 +72,35 @@ let bruteForceOneStep: T = fun game ->
         s
     in
     maxByWeight graph weight
+
+let makeNotEmpty xs = 0::xs 
+
+let bruteForceTwoStep: T = fun game ->
+    let graph = game.Graph
+    let me = game.Me
+    let isOurEdge {Graph.Color=cOpt} =
+        match cOpt with
+        | Some c -> c = me
+        | None -> false
+    in
+    let dists = ShortestPath.Compute graph in
+    let weight (edge: Graph.Edge) =
+        let graph = Graph.claimEdge graph me edge.Ends
+        let yetUnclaimed = Graph.unclaimedEdges graph
+        yetUnclaimed 
+        |> List.map (fun edge -> 
+            let graph = Graph.claimEdge graph me edge.Ends 
+            let yetUnclaimed = Graph.unclaimedEdges graph
+            yetUnclaimed 
+            |> List.map (fun edge -> 
+                let graph = Graph.claimEdge graph me edge.Ends 
+                let reach = ShortestPath.Compute {graph with Graph.Edges = List.filter isOurEdge graph.Edges}
+                Game.score {game with Game.Graph = graph } dists reach
+            )
+            |> makeNotEmpty
+            |> List.max
+        )
+        |> makeNotEmpty
+        |> List.max
+    in
+    maxByWeight graph weight

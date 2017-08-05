@@ -27,6 +27,8 @@ let normalizeEdgeEnds (u, v) =
 
 let isUnclaimedEdge edge = Option.isNone edge.Color
 
+let unclaimedEdges graph = List.filter isUnclaimedEdge graph.Edges
+
 let isEndPoint { Ends = (u, v) } vertex = vertex = u || vertex = v
 
 let isSource { Verts = verts } vertex = 

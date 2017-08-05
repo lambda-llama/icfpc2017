@@ -58,7 +58,7 @@ let rec _minimax (state: State) (edge: Edge) (player: Color) (depth: int): int =
         best
 
 let minimax: Strategy.T = fun game ->
-    let maxDepth = 1
+    let maxDepth = 0
     let depth = int (Math.Min(maxDepth, game.Graph.Edges |> List.filter isUnclaimedEdge |> List.length))
     getUnclaimedEdges game
     |> List.sortByDescending (fun e -> _minimax game e game.Me depth)
