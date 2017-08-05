@@ -1,7 +1,12 @@
 module Game
 
+type VertexId = int
+
 type State = {
     Graph: Graph.T
+    Graph2: Graphs.Graph.T
+    externalToVid: Map<VertexId, int>
+    vidToExternal: VertexId array
     Me: Graph.Color
     BFSDist: Map<Graph.VertexId, int[]>
     Union: FastUnion.T
@@ -10,23 +15,11 @@ type State = {
 
 let applyClaim state (claim: ProtocolData.Claim) = 
     if claim.punter = state.Me
-        then
-            state.Union.Unite claim.source, claim.target 
-            {
-                Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target); 
-                Me = state.Me
-                BFSDist = state.BFSDist
-                Union = state.Union
-                NumPlayers =state.NumPlayers
-            }
-        else
-            {
-                Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target); 
-                Me = state.Me
-                BFSDist = state.BFSDist
-                Union = state.Union
-                NumPlayers =state.NumPlayers
-            }
+    then
+        let _ = state.Union.Unite claim.source, claim.target 
+        {state with Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target)}
+    else
+        {state with Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target)}
 
 let private applyClaims state claims = List.fold applyClaim state claims
 
@@ -36,17 +29,32 @@ let initialState (setup: ProtocolData.SetupIn ) =
         |> Array.map (fun {id = id; coords = coords} ->
             { Graph.Id = id;
               Graph.IsSource = Array.contains id setup.map.mines;
-              Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords; })
-    let edges =
-        setup.map.rivers
-            |> Array.toList
-            |> List.map (fun site -> (site.source, site.target))
-    let G = Graph.create verts edges
+              Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords })
+    let edges = setup.map.rivers |> Array.map (fun site -> (site.source, site.target)) 
+
+    (* Mapping from external to internal IDs. *)
+    let externalToVid =
+        Seq.mapi (fun vid {Graph.Id=id} -> (id, vid)) verts |> Map.ofSeq
+    let vidToExternal = Array.map (fun {Graph.Id=id} -> id) verts
+
+    let nVertices = Array.length verts 
+    let sources =
+        {0..nVertices - 1}
+        |> Seq.filter (fun vi -> verts.[vi].IsSource)
+        |> Seq.toArray
+    let edges2 = 
+        edges 
+        |> Array.map (fun (u, v) -> (externalToVid.[u], externalToVid.[v]))
+
+    let G = Graph.create verts (Array.toList edges)
     {
-        Graph = G;
-        Me = setup.punter;
-        BFSDist = ShortestPath.Compute G;
-        Union = FastUnion.T G;
+        Graph = G
+        Graph2 = Graphs.Graph.create nVertices sources edges2
+        externalToVid = externalToVid
+        vidToExternal = vidToExternal
+        Me = setup.punter
+        BFSDist = ShortestPath.Compute G
+        Union = FastUnion.T G
         NumPlayers = setup.punters
     }
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =

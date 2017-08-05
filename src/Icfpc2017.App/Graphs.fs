@@ -2,13 +2,9 @@ module Graphs
 
 open System.Collections.Generic
 
-type VertexId = V of int
 type Color = int
 
-(* XXX [Id] should not be used internally. All graph methods assume
-       that vertices are number 0..|V|-1. *)
 type Vertex = {
-    Id: VertexId;
     IsSource: bool;
     Coords: (float * float) option
 }
@@ -52,35 +48,21 @@ module Edge =
  *)
 module Graph =
     type T = private {
-        Vertices: Vertex array
-        Resolver: Map<VertexId, int>
+        NVertices: int
         Sources: int array
         Edges: Edge.T array
     }
 
-    let create vertices uvs: T =
-        let nVertices = Array.length vertices in
-        let sources =
-            {0..nVertices - 1}
-            |> Seq.filter (fun vi -> vertices.[vi].IsSource)
-            |> Seq.toArray
-        in
-
-        (* Mapping from external to internal IDs. *)
-        let resolver =
-            Seq.mapi (fun vid {Id=id} -> (id, vid)) vertices |> Map.ofSeq
-        in
-
-        {Vertices=vertices; Resolver=resolver;
+    let create nVertices sources uvs: T =       
+        {NVertices=nVertices; 
          Sources=sources;
-         Edges=Array.map (fun (u, v) ->
-             Edge.create (resolver.[u], resolver.[v])) uvs}
+         Edges=Array.map Edge.create uvs}
 
-    let vertices {Vertices=vs} = vs
+    let vertices {NVertices=nVertices} = [0..nVertices - 1]
     let sources {Sources=sources} = sources
     let edges {Edges=es} = es
 
-    let nVertices = vertices >> Array.length
+    let nVertices {NVertices=nVertices} = nVertices
     let nEdges = edges >> Array.length
 
     let adjacent {Edges=es} vid =
@@ -89,17 +71,7 @@ module Graph =
         |> Array.map (fun e -> Edge.opposite e vid)
 
     let claimEdge {Edges=es} eid punter =
-        es.[eid] <- Edge.claim es.[eid] punter
-
-    let vidToExternal {Vertices=vs} vid: VertexId = vs.[vid].Id
-    let externalToVid {Resolver=resolver} id: int = resolver.[id]
-
-    let eidToExternal ({Edges=es} as g) eid: (VertexId * VertexId) =
-        let (u, v) = Edge.ends es.[eid] in
-        (vidToExternal g u, vidToExternal g v)
-    let externalToEid ({Edges=es} as g) (u, v): int =
-        let e = Edge.create (externalToVid g u, externalToVid g v) in
-        Array.findIndex ((=) e) es
+        es.[eid] <- Edge.claim es.[eid] punter   
 
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)

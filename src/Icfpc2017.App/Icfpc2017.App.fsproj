@@ -9,6 +9,7 @@
     <Compile Include="UnionFind.fs" />
     <Compile Include="ProtocolData.fs" />
     <Compile Include="Graph.fs" />
+    <Compile Include="Graphs.fs" />    
     <Compile Include="ShortestPath.fs" />
     <Compile Include="Union.fs" />
     <Compile Include="FastUnion.fs" />
@@ -19,7 +20,7 @@
     <Compile Include="MixedStrategy.fs" />
     <Compile Include="Strategies.fs" />
     <Compile Include="Pipe.fs" />
-    <Compile Include="Simulation.fs" />
+    <Compile Include="Simulation.fs" />    
     <Compile Include="Program.fs" />
   </ItemGroup>
 
