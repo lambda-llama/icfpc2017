@@ -27,8 +27,9 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
             | ProtocolData.Stop stop ->
                     let sortedScores = stop.stop.scores |> Array.sortBy (fun x -> x.punter) 
                                                         |> Array.map (fun x -> x.score)
-
-                    eprintf """{"sortedScores": "%A" "me": %A}\n""" (Array.toList sortedScores) punter
+                    let sortedScoresAsStr = sortedScores |> Array.map string 
+                                                         |> String.concat ","
+                    eprintf """{"sortedScores": "%s" "me": "%d"}\n""" sortedScoresAsStr punter
             | message -> failwithf "Unexpected response: %A\n" message        
         in go initialState
 
