@@ -26,8 +26,11 @@ type State = {
     NumPlayers: int
 }
 
+(* The edges must be ordered to make the lookup more robust. *)
+let ordered (u, v) = (min u v, max u v)
+
 let applyClaim state (claim: ProtocolData.Claim) =
-    let edge = (claim.source, claim.target)
+    let edge = ordered (claim.source, claim.target)
     let eid = state.EIndex.i(edge)
     if claim.punter = state.Me
     then
@@ -49,9 +52,7 @@ let initialState (setup: ProtocolData.SetupIn ) =
             { Graph.Id = id;
               Graph.IsSource = Array.contains id setup.map.mines;
               Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords })
-
-    (* The edges must be ordered to make the lookup more robust. *)
-    let ordered (u, v) = (min u v, max u v)
+    
     let edges = setup.map.rivers
                 |> Array.map (fun site -> ordered (site.source, site.target))
 
