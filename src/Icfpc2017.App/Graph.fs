@@ -1,7 +1,7 @@
 module Graph
 
-type VertexId = uint32
-type Color = uint32
+type VertexId = int
+type Color = int
 
 type Edge = {
     // Invariant: first vertex is smaller,

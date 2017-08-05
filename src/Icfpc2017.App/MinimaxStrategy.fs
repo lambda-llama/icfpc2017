@@ -25,22 +25,22 @@ let heuristic (game: State): int =
             (fun p ->
                 let isOwnedEdge { Graph.Color = cOpt } =
                     match cOpt with
-                    | Some c -> c = uint32 p
+                    | Some c -> c = p
                     | None -> false
                 ShortestPath.Compute { graph with Graph.Edges = List.filter isOwnedEdge graph.Edges })
     let scores =
         reaches
         |> List.map (fun r -> Game.score game dists r)
         |> List.toArray
-    let myScore = scores.[int game.Me]
-    scores.[int game.Me] <- Int32.MinValue
+    let myScore = scores.[game.Me]
+    scores.[game.Me] <- Int32.MinValue
     let bestOpponentScore = scores |> Array.max
     myScore - bestOpponentScore
 
 let rec _minimax (state: State) (edge: Edge) (player: Color) (depth: int): int =
     let { Ends = ends } = edge
     let newState = { state with Graph = claimEdge state.Graph player ends }
-    let nextPlayer = (player + 1u) % uint32 state.NumPlayers
+    let nextPlayer = (player + 1) % state.NumPlayers
     
     if (depth = 0) then
         heuristic newState

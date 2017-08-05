@@ -9,7 +9,7 @@ type State = {
 }
 
 let private applyClaim state (claim: ProtocolData.Claim) = {
-    state with Graph = Graph.claimEdge state.Graph (uint32 claim.punter) (uint32 claim.source, uint32 claim.target);
+    state with Graph = Graph.claimEdge state.Graph claim.punter (claim.source, claim.target);
 }
 
 let private applyClaims state claims = List.fold applyClaim state claims
@@ -18,17 +18,17 @@ let initialState (setup: ProtocolData.SetupIn ) =
     let verts =
         setup.map.sites
         |> Array.map (fun {id = id; coords = coords} ->
-            { Graph.Id = uint32 id;
+            { Graph.Id = id;
               Graph.IsSource = Array.contains id setup.map.mines;
               Graph.Coords = Option.map (fun (c: ProtocolData.Coords) -> (c.x, c.y)) coords; })
     let edges =
         setup.map.rivers
             |> Array.toList
-            |> List.map (fun site -> (uint32 site.source, uint32 site.target))
+            |> List.map (fun site -> (site.source, site.target))
     let G = Graph.create verts edges
     {
         Graph = G;
-        Me = uint32 setup.punter;
+        Me = setup.punter;
         BFSDist = ShortestPath.Compute G;
         Union = FastUnion.T G;
         NumPlayers = setup.punters

@@ -4,7 +4,7 @@ open System.Collections.Generic
 
 let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[]) =
      let q = new Queue<Graph.VertexId * int>() in     
-     distances.[int mine] <- 0;
+     distances.[mine] <- 0;
      q.Enqueue (mine, 0);
      while q.Count <> 0 do
         let (vertex, d) = q.Dequeue () in
@@ -16,9 +16,9 @@ let BFS (graph: Graph.T) (mine: Graph.VertexId) (distances: int[]) =
                     if ver1 = vertex then ver2
                     else ver1 
                 in
-                if distances.[int nextVertex] = -1
+                if distances.[nextVertex] = -1
                 then begin
-                    distances.[int nextVertex] <- d + 1;
+                    distances.[nextVertex] <- d + 1;
                     q.Enqueue (nextVertex, d + 1) 
                 end
             end

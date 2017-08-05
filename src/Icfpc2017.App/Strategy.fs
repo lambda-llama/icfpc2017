@@ -51,7 +51,7 @@ let growFromMines: T = fun {Game.Graph=graph; Game.Me=me} ->
         in
 
         let {Graph.Ends=ends} =
-            Graph.outEdges graph (uint32 mine)
+            Graph.outEdges graph mine
             (* TODO: pick the most remote one. *)
             |> List.find (fun _ -> true)
         in ends
