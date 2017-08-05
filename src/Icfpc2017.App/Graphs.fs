@@ -11,21 +11,25 @@ type Vertex = {
 }
 
 module Edge =
-    type T = private Edge of (int * int)
+    type T = private {
+        id: int
+        uv: int * int
+    }
 
     (* Enforces an invariant that the first vertex ID is smaller. *)
-    let create uv = Edge uv
+    let create id uv = { id=id; uv=uv }
 
-    let ends (Edge uv) = uv
+    let id { id=id } = id
+    let ends { uv=uv } = uv
 
-    let opposite (Edge (u, v)) w =
+    let opposite { uv=(u, v) } w =
         if w = u
         then v
         else
             assert (w = v)
             u
 
-    let contains (Edge (u, v)) w = u = w || v = w    
+    let contains { uv=(u, v) } w = u = w || v = w
 
 (**
  * The Graph.
@@ -45,11 +49,11 @@ module Graph =
             |> List.map (fun v -> sources |> Array.contains v)
             |> List.map (fun s -> { IsSource = s; Coords = None })
             |> List.toArray
-            
+
         {NVertices=nVertices;
          Vertices=vertices;
          Sources=sources;
-         Edges=Array.map Edge.create uvs;
+         Edges=Array.mapi Edge.create uvs;
          Colors=Map.empty}
 
     let vertices {Vertices=vertices} = vertices
@@ -59,6 +63,9 @@ module Graph =
     let nVertices {NVertices=nVertices} = nVertices
     let nEdges = edges >> Array.length
 
+    let withEdges (graph: T) es =
+        { graph with Edges=es }
+
     let adjacent {Edges=es} vid =
         es
         |> Array.filter (fun e -> Edge.contains e vid)
@@ -66,6 +73,14 @@ module Graph =
 
     let claimEdge ({Colors=cs} as g) punter eid: T =
         {g with Colors=Map.add eid punter cs}
+
+    let isClaimed {Colors=cs} edge: bool =
+        cs.ContainsKey (Edge.id edge)
+
+    let isClaimedBy punter {Colors=cs} edge: bool =
+        match cs.TryFind (Edge.id edge) with
+        | Some color -> color <> punter
+        | None -> false
 
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)
@@ -85,3 +100,8 @@ module Traversal =
                     q.Enqueue next
 
         distances
+
+    let shortestPaths (graph: Graph.T): Map<int, int array> =
+        Graph.sources graph
+        |> Array.map (fun v -> (v, shortestPath graph v))
+        |> Map.ofArray
