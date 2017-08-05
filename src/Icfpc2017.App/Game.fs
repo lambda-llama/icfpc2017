@@ -5,6 +5,7 @@ type State = {
     Me: Graph.Color
     BFSDist: Map<Graph.VertexId, int[]>
     Union: FastUnion.T
+    NumPlayers: int
 }
 
 let private applyClaim state (claim: ProtocolData.Claim) = {
@@ -30,6 +31,7 @@ let initialState (setup: ProtocolData.SetupIn ) =
         Me = uint32 setup.punter;
         BFSDist = ShortestPath.Compute G;
         Union = FastUnion.T G;
+        NumPlayers = setup.punters
     }
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
     moveIn.move.moves
@@ -56,7 +58,7 @@ type Renderer = {
     mutable count: int;
 }  with
     static member create directory =
-        let dir = sprintf "%s/%d" directory (System.Diagnostics.Process.GetCurrentProcess().Id)
+        let dir = sprintf "%s/%d" directory (System.DateTime.Now.Ticks)
         System.IO.Directory.CreateDirectory dir |> ignore
         { directory = dir; count = 0 }
         

@@ -72,9 +72,3 @@ let bruteForceOneStep: T = fun game ->
         s
     in
     maxByWeight graph weight
-
-let all =
-    [("randomEdge", randomEdge);
-     ("growFromMines", growFromMines);
-     ("bruteForceOneStep", bruteForceOneStep)]
-    |> Map.ofList

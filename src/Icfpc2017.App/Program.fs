@@ -43,19 +43,19 @@ let online host port strategy = async {
 }
 
 let clientStart host port strategyName =
-    let strategy = Strategy.all.[strategyName] in
+    let strategy = Strategies.all.[strategyName] in
     online host port strategy |> Async.RunSynchronously
 
 [<EntryPoint>]
 let main = function
 | [|"--server"; mapFilePath|] ->
     Server.start mapFilePath (7777); 0
-| [|"--local"; strategyName|] when Map.containsKey strategyName Strategy.all ->
+| [|"--local"; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "localhost" 7777 strategyName; 0
-| [|port; strategyName|] when Map.containsKey strategyName Strategy.all ->
+| [|port; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
 | _ -> 
-    Strategy.all |> Map.toSeq |> Seq.map fst
+    Strategies.all |> Map.toSeq |> Seq.map fst
         |> String.concat "|"
         |> printf "usage:\n%%prog%% <--local|PORT> <%s>\n%%prog%% --server MAP"
     1
