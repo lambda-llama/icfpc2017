@@ -53,9 +53,6 @@ let offline (strategy: Strategy.T) =
        | _ -> ()      
        Pipe.close p
 
-let clientStart host port strategyName =
-    online host port Strategies.all.[strategyName]
-
 let runSimulation mapName = 
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
     let competitors = [
@@ -73,17 +70,9 @@ let runSimulation mapName =
 let main = function
 | [|"--sim"; |] -> runSimulation "lambda"; 0
 | [|"--sim"; map |] -> runSimulation map; 0
-| [|"--server"; mapFilePath|] ->
-    (* Server.start mapFilePath (7777); *) 0
-| [|"--local"; strategyName|] when Map.containsKey strategyName Strategies.all ->
-    clientStart "localhost" 7777 strategyName; 0
-| [|"--tournament"; port; nPlayers|]  ->
-        Tournament.tournament (int nPlayers) (int port); 
-        0
 | [|port; strategyName|] when Map.containsKey strategyName Strategies.all ->
-    clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
-| [||] ->
-    offline Strategy.bruteForce1; 0
+    online "punter.inf.ed.ac.uk" (int port) Strategies.all.[strategyName]; 0
+| [||] -> offline Strategy.bruteForce1; 0
 | _ -> 
     Strategies.all |> Map.toSeq |> Seq.map fst
         |> String.concat "|"
