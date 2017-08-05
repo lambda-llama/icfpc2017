@@ -11,7 +11,7 @@ type T = private {
     OutStream: Stream
 }
 
-let debug = ref true
+let debug = ref false
 
 let connect (host: string) (port: int32): T =
     let client = new TcpClient () in

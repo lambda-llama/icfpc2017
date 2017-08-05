@@ -1,5 +1,8 @@
 module Game
 
+module Graph2 = Graphs.Graph
+module Vertex2 = Graphs.Vertex
+
 (* Mapping from external to internal IDs. *)
 type Index<'a when 'a : comparison> = {
     eToI: Map<'a, int>
@@ -18,7 +21,7 @@ type VertexId = int
 
 type State = {
     Graph: Graph.T
-    Graph2: Graphs.Graph.T
+    Graph2: Graph2.T
     EIndex: (VertexId * VertexId) Index
     Me: Graph.Color
     BFSDist: Map<Graph.VertexId, int[]>
@@ -32,16 +35,17 @@ let ordered (u, v) = (min u v, max u v)
 let applyClaim state (claim: ProtocolData.Claim) =
     let edge = ordered (claim.source, claim.target)
     let eid = state.EIndex.i(edge)
+    eprintf "EID: %d (%A)" eid edge
     if claim.punter = state.Me
     then
         let _ = state.Union.Unite claim.source, claim.target
         {state with
            Graph = Graph.claimEdge state.Graph claim.punter edge
-           Graph2 = Graphs.Graph.claimEdge state.Graph2 claim.punter eid}
+           Graph2 = Graph2.claimEdge state.Graph2 claim.punter eid}
     else
         {state with
            Graph = Graph.claimEdge state.Graph claim.punter edge
-           Graph2 = Graphs.Graph.claimEdge state.Graph2 claim.punter eid}
+           Graph2 = Graph2.claimEdge state.Graph2 claim.punter eid}
 
 let private applyClaims state claims = List.fold applyClaim state claims
 
@@ -68,7 +72,7 @@ let initialState (setup: ProtocolData.SetupIn ) =
         Array.map (fun (u, v) -> (vIndex.i(u), vIndex.i(v))) edges
 
     let G = Graph.create verts (Array.toList edges)
-    let G2 = Graphs.Graph.create nVertices sources edges2
+    let G2 = Graph2.create nVertices sources edges2
     {
         Graph = G
         Graph2 = G2
@@ -98,13 +102,14 @@ let score game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, in
     total
 
 let score2 game (dist: Map<Graph.VertexId, int[]>) (reach: Map<Graph.VertexId, int[]>) =
-    let isSource { Graphs.Vertex.IsSource = s } = s
-    let (sources, sinks) = Array.partition isSource (Graphs.Graph.vertices game.Graph2)
+    let (sources, sinks) = Array.partition Vertex2.isSource (Graph2.vertices game.Graph2)
     let mutable total = 0
     for u in sources do
+        let uid = Vertex2.id u
         for v in sinks do
-            let d = dist.[u.Id].[v.Id]
-            if reach.[u.Id].[v.Id] <> -1 then total <- total + d * d
+            let vid = Vertex2.id v
+            let d = dist.[uid].[vid]
+            if reach.[uid].[vid] <> -1 then total <- total + d * d
     total
 
 type Renderer = {

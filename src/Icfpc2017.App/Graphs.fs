@@ -4,12 +4,18 @@ open System.Collections.Generic
 
 type Color = int
 
-(* TODO: make private *)
-type Vertex = {
-    Id: int
-    IsSource: bool
-    Coords: (float * float) option
-}
+module Vertex = 
+    type T = private {
+        Id: int
+        IsSource: bool
+        Coords: (float * float) option
+    }
+
+    let create id isSource coords: T = {Id=id; IsSource=isSource; Coords=coords}
+
+    let id {Id=id} = id
+    let isSource {IsSource=isSource} = isSource
+    let coords {Coords=coords} = coords
 
 module Edge =
     type T = private {
@@ -37,7 +43,7 @@ module Edge =
  *)
 module Graph =
     type T = private {
-        Vertices: Vertex array
+        Vertices: Vertex.T array
         Sources: int array
         Edges: Edge.T array
         Colors: Map<int, Color>
@@ -45,10 +51,9 @@ module Graph =
 
     let create nVertices sources uvs: T =
         let vertices =
-            [0..nVertices - 1]
-            |> List.map (fun v -> sources |> Array.contains v)
-            |> List.mapi (fun i s -> { Id = i; IsSource = s; Coords = None })
-            |> List.toArray
+            {0..nVertices - 1}
+            |> Seq.map (fun vid -> Vertex.create vid (Array.contains vid sources) None)
+            |> Seq.toArray
 
         {Vertices=vertices;
          Sources=sources;
@@ -75,9 +80,9 @@ module Graph =
         {g with Edges=subEdges; Colors=subColors}
 
     let adjacent {Edges=es} vid =
-        es
-        |> Array.filter (fun e -> Edge.contains e vid)
-        |> Array.map (fun e -> Edge.opposite e vid)
+        Array.toSeq es
+        |> Seq.filter (fun e -> Edge.contains e vid)
+        |> Seq.map (fun e -> Edge.opposite e vid)
 
     let adjacentEdges {Edges=es} vid =
         es
