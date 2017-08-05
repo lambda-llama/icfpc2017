@@ -1,5 +1,8 @@
 module Strategy
 
+module Graph2 = Graphs.Graph
+module Edge2 = Graphs.Edge
+
 type T = {
     name: string 
     init: Graph.T -> Game.State -> (Graph.VertexId * Graph.VertexId)
@@ -17,8 +20,7 @@ let private maxByWeight (graph: Graph.T) (weight: Graph.Edge -> int) =
 
 let randomEdge = 
     stateless "randomEdge" (fun game ->
-        let { Graph.Ends = ends } = game.Graph.Edges |> List.find Graph.isUnclaimedEdge
-        ends
+        Graph2.unclaimed game.Graph2 |> Seq.head |> Edge2.ends        
     )
 
 let growFromMines = 

@@ -65,18 +65,22 @@ module Graph =
         { graph with Edges=es }
 
     (** Focus on a subgraph of a specific color. *)
-    let subgraph (g : T) (color: Color): T = 
+    let subgraph (g : T) (color: Color): T =
         (* TODO: ideally just filter in [[adjacent]]. *)
         let subColors = Map.filter (fun _ -> (=) color) g.Colors
-        let subEdges = 
-            g.Edges 
-            |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors) 
+        let subEdges =
+            g.Edges
+            |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors)
         {g with Edges=subEdges; Colors=subColors}
 
     let adjacent {Edges=es} vid =
         es
         |> Array.filter (fun e -> Edge.contains e vid)
         |> Array.map (fun e -> Edge.opposite e vid)
+
+    let unclaimed {Edges=es; Colors=colors}: Edge.T seq = 
+        Array.toSeq es
+        |> Seq.filter (fun e -> Map.containsKey (Edge.id e) colors)
 
     let claimEdge ({Colors=cs} as g) punter eid: T =
         {g with Colors=Map.add eid punter cs}
@@ -100,7 +104,7 @@ module Traversal =
         while q.Count <> 0 do
             let current = q.Dequeue () in
             seen.[current] <- true
-            for next in Graph.adjacent graph current do                
+            for next in Graph.adjacent graph current do
                 if not seen.[next]
                 then
                     distances.[next] <- distances.[current] + 1
