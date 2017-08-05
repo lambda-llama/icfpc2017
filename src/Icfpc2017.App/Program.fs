@@ -1,61 +1,68 @@
 ﻿open System
 
+open Newtonsoft.Json
+
 let username = "lambda-llama"
 
-let handshake (p: Pipe.T): Async<ProtocolData.SetupIn> = async {
-    let! _ = Pipe.write p (ProtocolData.Handshake {me=username})
-    let! (ProtocolData.HandshakeAck h) = Pipe.read p
+let handshake (p: Pipe.T): unit = 
+    let () = Pipe.write p (ProtocolData.Handshake {me=username})
+    let (ProtocolData.HandshakeAck h) = Pipe.read p
     if h.you <> username
-    then return (failwithf "Unexpected response: %A\n" h)
-    else
-        let! (ProtocolData.Setup setup) = Pipe.read p
-        let! _ = Pipe.write p (ProtocolData.Ready {ready=setup.punter})
-        return setup
-}
+    then failwithf "Unexpected response: %A\n" h
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
     let rec go currState =
-        async {
-            let! message = Pipe.read p in
-            match message with
-            | ProtocolData.RequestMove moves ->
-              let nextState = Game.applyMoveIn currState moves
-              rend.dump nextState
-              let (source, target) = strategy nextState
-              let nextMove = ProtocolData.Claim {
-                  punter=punter; 
-                  source=int source; 
-                  target=int target
-              }
-              let! () = Pipe.write p (ProtocolData.Move nextMove)
-              return! go nextState
-            | ProtocolData.Stop stop -> return ()
-            | _ -> failwithf "Unexpected response: %A\n" message
-        }
+        rend.dump currState
+        match Pipe.read p with
+        | ProtocolData.RequestMove moves ->
+          let nextState = Game.applyMoveIn currState moves
+          let (source, target) = strategy nextState
+          let nextMove = ProtocolData.Claim {punter=punter; source=source; target=target}
+          let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
+          go nextState
+        | ProtocolData.Stop stop -> ()
+        | message -> failwithf "Unexpected response: %A\n" message        
     in go
 
-let online host port strategy = async {
-    let! p = Pipe.connect host port
-    let! setup = handshake p
-    let initialState = Game.initialState setup
-    let! _ = play p setup.punter strategy initialState
-    printf "We: %d" (setup.punter)
-    return ()
-}
+let online host port strategy = 
+    let p = Pipe.connect host port
+    let () = handshake p
+    let (ProtocolData.Setup setup) = Pipe.read p
+    let initialState = Game.initialState setup    
+    do Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None})    
+       play p setup.punter strategy initialState
+       printf "We: %d" (setup.punter)
+
+let offline strategy = 
+    let p = Pipe.std ()
+    do handshake p
+       match Pipe.read p with 
+       | ProtocolData.Setup setup -> 
+         let state = JsonConvert.SerializeObject (Game.initialState setup)
+         Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some state})
+       | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
+         let currState = JsonConvert.DeserializeObject state :?> Game.State
+         let nextState = Game.applyMoveIn currState moveIn
+         let (source, target) = strategy nextState
+         let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
+         Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})          
+       | _ -> ()      
+       Pipe.close p
 
 let clientStart host port strategyName =
-    let strategy = Strategies.all.[strategyName] in
-    online host port strategy |> Async.RunSynchronously
+    online host port Strategies.all.[strategyName]
 
 [<EntryPoint>]
 let main = function
 | [|"--server"; mapFilePath|] ->
-    Server.start mapFilePath (7777); 0
+    (* Server.start mapFilePath (7777); *) 0
 | [|"--local"; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "localhost" 7777 strategyName; 0
 | [|port; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
+| [||] ->
+    offline Strategy.bruteForceOneStep; 0
 | _ -> 
     Strategies.all |> Map.toSeq |> Seq.map fst
         |> String.concat "|"

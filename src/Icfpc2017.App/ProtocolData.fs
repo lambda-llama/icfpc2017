@@ -45,6 +45,7 @@ type SetupIn = {
 
 type SetupOut = {
     ready : int
+    state : string option
 }
 
 // 2. Gameplay
@@ -69,9 +70,13 @@ type Moves = {
 
 type MoveIn = {
     move : Moves
+    state : string option
 }
 
-type MoveOut = Move
+type MoveOut = {
+    move: Move
+    state: string option
+}
 
 // 3. Scoring
 
@@ -152,8 +157,14 @@ let serializeSetupIn (s : SetupIn) : JObject =
         JProperty("map", serializeMap s.map))
 
 let serializeSetupOut (s : SetupOut) : JObject =
-    JObject(
-        JProperty("ready" , s.ready))
+    match s.state with 
+    | Some state -> 
+      JObject(
+          JProperty("ready" , s.ready),
+          JProperty("state", state))
+    | None -> 
+      JObject(
+          JProperty("ready" , s.ready))
 
 let serializeClaim (c : Claim) : JObject =
     JObject(
@@ -183,9 +194,13 @@ let serializeMoveIn (m : MoveIn) : JObject =
         JProperty("move", serializeMoves m.move))
 
 let serializeMoveOut (m : MoveOut) : JObject =
-    match m with
-    | Claim claim -> serializeClaim claim
-    | Pass pass -> serializePass pass
+    let o = 
+        match m.move with
+        | Claim claim -> serializeClaim claim
+        | Pass pass -> serializePass pass
+    in match m.state with 
+       | Some state -> o.Add(JProperty("state", state)); o
+       | None -> o
 
 let serializeScore (s : Score) : JObject =
     JObject(
@@ -272,6 +287,9 @@ let deserializeMap (o : JObject) : Map =
         mines = convertArray o.["mines"] (fun (v : JToken) -> v.ToObject<int>())
     }
 
+let deserializeState (o : JObject) = 
+    if o.["state"] = null then None else Some (o.["state"].ToObject<string> ())
+
 let deserializeSetupIn (o : JObject) : SetupIn =
     {
         punter = o.["punter"].ToObject<int>()
@@ -282,6 +300,7 @@ let deserializeSetupIn (o : JObject) : SetupIn =
 let deserializeSetupOut (o : JObject) : SetupOut =
     {
         ready = o.["ready"].ToObject<int>()
+        state = deserializeState o
     }
 
 let deserializeMove (o : JObject) : Move =
@@ -300,14 +319,33 @@ let deserializeMove (o : JObject) : Move =
         }
     | x -> raise (exn x)
 
+let deserializeMoveOut (o : JObject) : MoveOut =
+    let prop = o.Properties().First()
+    let v = prop.Value :?> JObject
+    let move = 
+        match (prop.Name) with
+        | "claim" ->
+            Claim {
+                punter = v.["punter"].ToObject<int>()
+                source = v.["source"].ToObject<int>()
+                target = v.["target"].ToObject<int>()
+            }
+        | "pass" ->
+            Pass {
+                punter = v.["punter"].ToObject<int>()
+            }
+        | x -> raise (exn x)
+    in {move=move; state=deserializeState o}
+
 let deserializeMoves (o : JObject) : Moves =
     {
         moves = convertArray o.["moves"] deserializeMove
     }
 
 let deserializeMoveIn (o : JObject) : MoveIn =
-    {
+   {
         move = (o.["move"] :?> JObject) |> deserializeMoves
+        state = deserializeState o
     }
 
 let deserializeScore (o : JObject) : Score =
@@ -347,8 +385,7 @@ let deserializeMessageOut (o : JObject) : MessageOut =
     match (prop.Name) with
     | "me" -> Handshake (deserializeHandshakeOut o)
     | "ready" -> Ready (deserializeSetupOut o)
-    | "claim" -> Move (deserializeMove o)
-    | "pass" -> Move (deserializeMove o)
+    | "claim" | "pass" -> Move (deserializeMoveOut o)
     | x -> raise (exn x)
 
 let deserialize (message : string) : MessageIn =

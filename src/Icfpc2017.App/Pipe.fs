@@ -1,75 +1,81 @@
 module Pipe
 
+open System
+open System.IO
 open System.Net
 open System.Net.Sockets
 open System.Text
 
 type T = private {
-    Stream: NetworkStream
+    InStream: Stream
+    OutStream: Stream
 }
 
 let debug = ref true
 
-let connect (host: string) (port: int32): Async<T> =
+let connect (host: string) (port: int32): T =
     let client = new TcpClient () in
-    async {
-        printf "Connecting on port %i... " port
-        let! () =
-            client.ConnectAsync(host, port)
-            |> Async.AwaitTask
-        printf "OK!\n"
-        return {Stream=client.GetStream ()}
-    }
+    eprintf "Connecting on port %i... " port
+    let t = 
+        async {
+            let! () = client.ConnectAsync(host, port) |> Async.AwaitTask            
+            eprintf "OK!\n"
+            let stream = client.GetStream ()
+            return {InStream=stream; OutStream=stream}
+        }
+    in Async.RunSynchronously(t)
+
+let std () = 
+    {InStream=Console.OpenStandardInput ();
+     OutStream=Console.OpenStandardOutput ()}
+
+let close (p: T): unit = 
+    p.InStream.Dispose ();
+    p.OutStream.Dispose ()
 
 let accept (server: TcpListener): Async<T> =
     async {
         let! sock = server.AcceptSocketAsync() |> Async.AwaitTask
-        return { Stream = new NetworkStream(sock, true) }
+        let stream = new NetworkStream(sock, true)
+        return {InStream=stream; OutStream=stream}
     }
 
-let commonRead (p: T) (deserialize : string -> 'a): Async<'a> =
+let commonRead (p: T) (deserialize : string -> 'a): 'a =
     let rec readLength (sb: StringBuilder) =
-        match char (p.Stream.ReadByte ()) with
+        match char (p.InStream.ReadByte ()) with
         | ':' -> int (sb.ToString ())
         | ch  ->
             ignore (sb.Append ch);
             readLength sb
     and readMessage (ob : byte array) offset =
-        async {
-            if offset = ob.Length
-            then
-                let message = deserialize(Encoding.ASCII.GetString ob)
-                if !debug then printf "<<< %A\n" message
-                return message
-            else
-                let! read =
-                    p.Stream.ReadAsync(ob, offset, ob.Length - offset)
-                    |> Async.AwaitTask
-                return! readMessage ob (offset + read)
-        }
+        if offset = ob.Length
+        then
+            let message = deserialize(Encoding.ASCII.GetString ob)
+            if !debug then eprintf "<<< %A\n" message
+            message
+        else
+            let read = p.InStream.Read(ob, offset, ob.Length - offset)
+            readMessage ob (offset + read)        
     in readMessage (readLength (StringBuilder ()) |> Array.zeroCreate) 0
 
-let read (p: T): Async<ProtocolData.MessageIn> =
+let read (p: T): ProtocolData.MessageIn =
     commonRead p ProtocolData.deserialize
-
+(* 
 let serverRead (p: T): Async<ProtocolData.MessageOut> =
-    commonRead p ProtocolData.serverDeserialize
+    commonRead p ProtocolData.serverDeserialize *)
 
-let _write (stream: NetworkStream) (b: byte array) =
-    stream.WriteAsync(b, 0, b.Length) |> Async.AwaitTask
+let _write (stream: Stream) (b: byte array) =
+    stream.Write(b, 0, b.Length)
 
-let commonWrite (p: T) (serialize: 'a -> string) (message: 'a): Async<unit> = async {
-    if !debug then printf ">>> %A\n" message
+let commonWrite (p: T) (serialize: 'a -> string) (message: 'a): unit = 
+    if !debug then eprintf ">>> %A\n" message
     let input = serialize message
     let ib = Encoding.ASCII.GetBytes input
-    let! _ = sprintf "%d:" ib.Length
-            |> Encoding.ASCII.GetBytes
-            |> _write p.Stream
-    return! _write p.Stream ib
-}
+    sprintf "%d:" ib.Length |> Encoding.ASCII.GetBytes |> _write p.OutStream
+    _write p.OutStream ib
 
-let write (p: T) (message: ProtocolData.MessageOut): Async<unit> =
+let write (p: T) (message: ProtocolData.MessageOut): unit =
     commonWrite p ProtocolData.serialize message
 
-let serverWrite (p: T) (message: ProtocolData.MessageIn): Async<unit> =
-    commonWrite p ProtocolData.serverSerialize message
+(* let serverWrite (p: T) (message: ProtocolData.MessageIn): Async<unit> =
+    commonWrite p ProtocolData.serverSerialize message *)

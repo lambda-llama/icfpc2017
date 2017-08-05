@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="SerializationTests.fs" />
+    <!-- <Compile Include="SerializationTests.fs" /> -->
     <Compile Include="TraversalTests.fs" />
   </ItemGroup>
 
