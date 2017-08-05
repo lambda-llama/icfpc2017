@@ -27,6 +27,7 @@ type State = {
     BFSDist: Map<VertexId, int[]>
     Union: FastUnion.T
     NumPlayers: int
+    Settings: ProtocolData.Settings
 }
 
 (* The edges must be ordered to make the lookup more robust. *)
@@ -80,6 +81,7 @@ let initialState (setup: ProtocolData.SetupIn ) =
         BFSDist = ShortestPath.Compute G
         Union = FastUnion.T G
         NumPlayers = setup.punters
+        Settings = setup.settings
     }
 
 let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
