@@ -73,6 +73,9 @@ let main = function
     (* Server.start mapFilePath (7777); *) 0
 | [|"--local"; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "localhost" 7777 strategyName; 0
+| [|"--tournament"; port; nPlayers|]  ->
+        Tournament.tournament (int nPlayers) (int port); 
+        0
 | [|port; strategyName|] when Map.containsKey strategyName Strategies.all ->
     clientStart "punter.inf.ed.ac.uk" (int port) strategyName; 0
 | [||] ->
