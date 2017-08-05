@@ -164,7 +164,7 @@ module Traversal =
         let work = new Queue<int>() in
 
         let enqueueIfNeed x dist = 
-            if distances.[x] <> -1 then
+            if distances.[x] = -1 then
                 work.Enqueue x
                 distances.[x] <- dist
 
