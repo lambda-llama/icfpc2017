@@ -51,6 +51,7 @@ type SetupIn = {
 type SetupOut = {
     ready : int
     state : string option
+    futures : River array
 }
 
 // 2. Gameplay
@@ -171,10 +172,12 @@ let serializeSetupOut (s : SetupOut) : JObject =
     | Some state -> 
       JObject(
           JProperty("ready" , s.ready),
-          JProperty("state", state))
+          JProperty("state", state),
+          JProperty("futures", serializeArray s.futures serializeRiver))
     | None -> 
       JObject(
-          JProperty("ready" , s.ready))
+          JProperty("ready" , s.ready),
+          JProperty("futures", serializeArray s.futures serializeRiver))
 
 let serializeClaim (c : Claim) : JObject =
     JObject(
@@ -319,6 +322,7 @@ let deserializeSetupOut (o : JObject) : SetupOut =
     {
         ready = o.["ready"].ToObject<int>()
         state = deserializeState o
+        futures = convertArray o.["Futures"] deserializeRiver
     }
 
 let deserializeMove (o : JObject) : Move =

@@ -38,7 +38,7 @@ let online host port strategy =
     let () = handshake p
     let (ProtocolData.Setup setup) = Pipe.read p
     let initialState = Game.initialState setup    
-    do Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None})    
+    do Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None; futures=[||]})
        play p setup.punter strategy initialState
        printf "We: %d" (setup.punter)
 
@@ -48,7 +48,7 @@ let offline (strategy: Strategy.T) =
        match Pipe.read p with 
        | ProtocolData.Setup setup -> 
          let state = JsonConvert.SerializeObject (Game.initialState setup)
-         Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some state})
+         Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some state; futures=[||]})
        | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
          let currState = JsonConvert.DeserializeObject state :?> Game.State
          let nextState = Game.applyMoveIn currState moveIn

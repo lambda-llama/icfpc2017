@@ -11,8 +11,8 @@ module SerializationTests =
             serialize (Handshake { me = "llama" }),
             Is.EqualTo(@"{""me"":""llama""}"))
         Assert.That(
-            serialize (Ready {ready = 0; state = None }),
-            Is.EqualTo(@"{""ready"":0}"))
+            serialize (Ready {ready = 0; state = None; futures=[|{source = 0; target = 1}|]}),
+            Is.EqualTo(@"{""ready"":0,""futures"":[{""source"":0,""target"":1}]}"))
         Assert.That(
             serialize (Move {move=Claim { punter = 0; source = 0; target = 1 }; state=None}),
             Is.EqualTo(@"{""claim"":{""punter"":0,""source"":0,""target"":1}}"))
