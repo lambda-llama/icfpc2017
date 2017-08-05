@@ -5,11 +5,11 @@ type T = {
     Sites: Graph.VertexId list
 }
 
-let getOneSideScore (mines: Graph.VertexId list) (sites: Graph.VertexId list) (dist: Map<int,int[]>) = 
+let getOneSideScore (mines: Graph.VertexId list) (sites: Graph.VertexId list) (dist: Map<Graph.VertexId, int[]>) = 
     let mutable sum = 0 in
     for m in mines do
         for s in sites do
-            let d = dist.[int m].[int s] in
+            let d = dist.[m].[int s] in
             sum <- sum + d * d
     sum
 

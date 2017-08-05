@@ -15,6 +15,7 @@
     <Compile Include="Strategy.fs" />
     <Compile Include="Graphs.fs" />
     <Compile Include="MinimaxStrategy.fs" />
+    <Compile Include="GreadyStrategy.fs" />
     <Compile Include="Strategies.fs" />
     <Compile Include="Pipe.fs" />
     <Compile Include="Server.fs" />
