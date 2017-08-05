@@ -72,7 +72,7 @@ let initialState (setup: ProtocolData.SetupIn ) =
         Array.map (fun (u, v) -> (vIndex.i(u), vIndex.i(v))) edges
 
     let G = Graph.create verts (Array.toList edges)
-    let G2 = Graph2.create nVertices sources edges2
+    let G2 = Graph2.create (verts |> Array.map (fun v -> v.Coords)) sources edges2
     {
         Graph = G
         Graph2 = G2
@@ -124,6 +124,6 @@ type Renderer = {
     member this.dump (game: State) =
         let dot = sprintf "%s/%d.dot" this.directory this.count in
         let svg = sprintf "%s/_%d.svg" this.directory this.count in
-        System.IO.File.WriteAllText(dot, (Graph.toDot game.Me game.Graph))
+        System.IO.File.WriteAllText(dot, (Graphs.Graph.toDot game.Me game.Graph2))
         use p = System.Diagnostics.Process.Start("dot", sprintf "-Kfdp -n -Tsvg %s -o %s" dot svg)
         this.count <- this.count + 1

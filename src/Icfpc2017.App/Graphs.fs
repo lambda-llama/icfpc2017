@@ -49,10 +49,11 @@ module Graph =
         Colors: Map<int, Color>
     }
 
-    let create nVertices sources uvs: T =
+    let create (vertCoords: (float * float) option array) sources uvs: T =
         let vertices =
-            {0..nVertices - 1}
-            |> Seq.map (fun vid -> Vertex.create vid (Array.contains vid sources) None)
+            vertCoords 
+            |> Array.toSeq
+            |> Seq.mapi (fun vid coord -> Vertex.create vid (Array.contains vid sources) coord)
             |> Seq.toArray
 
         {Vertices=vertices;
@@ -113,6 +114,48 @@ module Graph =
     let originalEnds (graph: T) (e: Edge.T) = 
         let (iu, iv) = Edge.ends e
         (Vertex.id graph.Vertices.[iu], Vertex.id graph.Vertices.[iv])
+
+    let edgeColor graph e = graph.Colors.TryFind (Edge.id e)
+
+    let private colors = [|
+        "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink"; 
+        "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+        "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+        "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+        "black"; "black"; "black"; "black"; "black"; "black"; "black"; "black";
+    |]
+
+    let private makeScale (xs: float array): (float -> float) =
+        let spread = max ((Array.max xs - Array.min xs) / 2.0) 1.0
+        let mean = Array.sum xs / float (Array.length xs)
+        fun t -> (t - mean) / spread
+
+    let toDot we graph =
+        let aux f = vertices graph |> Array.map (Vertex.coords >> Option.map f >> Option.defaultValue 1.0)
+        let scaleX = makeScale (aux (fun (x, _) -> x))
+        let scaleY = makeScale (aux (fun (_, y) -> y))
+        let renderVertex v =
+            let id = Vertex.id v
+            let shape = if Vertex.isSource v then "square" else "circle" in
+            let position = 
+                match Vertex.coords v with
+                | None -> ""
+                | Some((x, y)) -> sprintf ", pos=\"%f,%f!\"" (scaleX x) (- (scaleY y))
+            in
+            sprintf "  %d [label=\"%d\", shape=\"%s\"%s];" id id shape position
+        in
+        let renderEdge (e: Edge.T) =
+            let (u, v) = originalEnds graph e
+            let (color: string, width: int) =
+                match edgeColor graph e with
+                | Some(idx) when idx = we -> ("red", 3)
+                | Some(idx) -> (Array.get colors (int idx), 3)
+                | None -> ("black", 1)
+            in sprintf "  %d -- %d [color=\"%s\", penwidth=\"%d\"];" u v color width
+        in
+        let nodes = vertices graph |> Array.map renderVertex |> String.concat "\n"
+        let edges = edges graph |> Array.map renderEdge |> String.concat "\n"
+        sprintf "graph {\n%s\n%s\n}" nodes edges
 
 module Traversal =
     (** Computes the shortest paths from [source] to all other vertices. *)
