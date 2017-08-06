@@ -21,6 +21,11 @@ let time message f =
     eprintf "%s: %d ms\n" message timer.ElapsedMilliseconds
     result
 
+let pairwise xs =
+    let rec go acc = function
+    | [] | [_] -> List.rev acc
+    | x::(y::_ as rest) -> go ((x, y)::acc) rest
+    in go [] xs
 
 type BinaryReader with
     member inline r.ReadArray(f: int -> 'a): 'a array =

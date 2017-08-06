@@ -16,10 +16,10 @@ let run (strategy: Strategy.T) =
     handshake p
     match Pipe.read p with
     | ProtocolData.Setup setup ->
-      let chunk = (Game.initialState setup strategy.defaultState).Serialize ()
-      Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some chunk; futures=[||]})
-    | ProtocolData.RequestMove {move=move; state=Some chunk} ->
-      let state = Game.applyMoves (time "State.Load" (fun () -> Game.State.Deserialize chunk)) move.moves
+      let blob = (Game.initialState setup strategy.defaultState).Serialize ()
+      Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some blob; futures=[||]})
+    | ProtocolData.RequestMove {move=move; state=Some blob} ->
+      let state = Game.applyMoves (time "State.Load" (fun () -> Game.State.Deserialize blob)) move.moves
       let timeoutsCount =
         move.moves
         |> Array.filter (fun m -> match m with | ProtocolData.Pass pass -> pass.punter = state.Me | _ -> false)

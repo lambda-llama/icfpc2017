@@ -29,7 +29,8 @@ type State = {
     VIndex: Index<VertexId>
     Me: Color
     NumPlayers: int
-    Settings: ProtocolData.Settings
+    Futures: bool
+    Splurges: bool
     StrategyState: Map<string, string>
     TimeoutsCount: int
     TimeUsedLastMoveFraction: float
@@ -41,13 +42,15 @@ type State = {
         let vIndex = r.ReadArray (fun _ -> r.ReadUInt32 ()) |> Index.create
         let me = r.ReadInt32 ()
         let numPlayers = r.ReadInt32 ()
-        let settings = { ProtocolData.futures = r.ReadBoolean () }
-
+        let futures = r.ReadBoolean ()
+        let splurges = r.ReadBoolean ()
         let strategyState = r.ReadMap (fun _ -> (r.ReadString (), r.ReadString ()))
         let timeoutCount = r.ReadInt32 ()
         let timeUsedLastMoveFraction = r.ReadDouble ()
-        { Graph = graph; VIndex = vIndex; Me = me; NumPlayers = numPlayers; Settings = settings;
-          StrategyState = strategyState; TimeoutsCount = timeoutCount; TimeUsedLastMoveFraction = timeUsedLastMoveFraction}
+        {Graph=graph; VIndex=vIndex; Me=me; NumPlayers=numPlayers;
+         Futures=futures; Splurges=splurges;
+         StrategyState=strategyState; TimeoutsCount=timeoutCount;
+         TimeUsedLastMoveFraction=timeUsedLastMoveFraction}
 
     member state.Serialize (): string =
         use s = new MemoryStream()
@@ -56,7 +59,8 @@ type State = {
         w.WriteArray (state.VIndex.iToE, w.Write)
         w.Write state.Me
         w.Write state.NumPlayers
-        w.Write state.Settings.futures
+        w.Write state.Futures
+        w.Write state.Splurges
         w.WriteMap (state.StrategyState, (fun k v -> w.Write k; w.Write v))
         w.Write state.TimeoutsCount
         w.Write state.TimeUsedLastMoveFraction
@@ -86,7 +90,8 @@ let initialState (setup: ProtocolData.SetupIn) (defaultStrategyState: Map<string
         VIndex = vIndex
         Me = setup.punter
         NumPlayers = setup.punters
-        Settings = setup.settings
+        Futures = setup.settings.futures
+        Splurges = setup.settings.splurges
         StrategyState = defaultStrategyState
         TimeoutsCount = 0
         TimeUsedLastMoveFraction = 0.0
@@ -105,19 +110,20 @@ let applyStrategyStep s step =
     let newState = { s with StrategyState = newStrategyState; TimeUsedLastMoveFraction = usedFraction }
     ((eu, ev), newState)
 
-
 let applyClaim s (claim: ProtocolData.Claim) =
     let eid = (s.VIndex.i(claim.source), s.VIndex.i(claim.target))
               |> Graph.edgeId s.Graph
     {s with Graph = Graph.claimEdge s.Graph claim.punter eid}
 
+let applySplurge s (splurge: ProtocolData.Splurge) =
+    Array.toList splurge.route |> pairwise |> List.fold (fun s (eu, ev) ->
+        applyClaim s {punter=splurge.punter; source=eu; target=ev}) s
+
 let applyMoves = Array.fold (fun s move ->
     match move with
     | ProtocolData.Claim claim -> applyClaim s claim
-    | _ -> s)
-    // | ProtocolData.Pass {punter=punter} ->
-    //   (* REMOVE BEFORE FINAL SUBMISSION *)
-    //   if punter = s.Me then failwith "PASS" else s)
+    | ProtocolData.Splurge splurge -> applySplurge s splurge
+    | ProtocolData.Pass _ -> s)
 
 let score2 game (dist: Map<int, int[]>) (reach: Map<int, int[]>) =
     let mutable total = 0

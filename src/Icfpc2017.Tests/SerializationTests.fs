@@ -41,8 +41,23 @@ module SerializationTests =
                             rivers = [| { source = 0u; target = 1u } |]
                             mines = [| 0u; 1u |]
                         }
-                    settings = { futures = true }
+                    settings = { futures = true; splurges = false }
                 }))
+        Assert.That(
+            deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [{""id"": 0}, {""id"": 1, ""x"": -1.5, ""y"": 0.5}], ""rivers"": [{""source"": 0, ""target"": 1}], ""mines"": [0, 1]}, ""settings"": {""splurges"": true}}",
+            Is.EqualTo(
+                Setup {
+                    punter = 0
+                    punters = 1
+                    map =
+                        {
+                            sites = [| { id = 0u; coords = None }; { id = 1u; coords = Some ({ x = -1.5; y = 0.5 }) } |]
+                            rivers = [| { source = 0u; target = 1u } |]
+                            mines = [| 0u; 1u |]
+                        }
+                    settings = { futures = false; splurges = true }
+                }))
+
         Assert.That(
             deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [], ""rivers"": [], ""mines"": []}}",
             Is.EqualTo(
@@ -55,7 +70,7 @@ module SerializationTests =
                             rivers = [||]
                             mines = [||]
                         }
-                    settings = { futures = false }
+                    settings = { futures = false; splurges = false }
                 }))
         Assert.That(
             deserialize @"{""move"": {""moves"":[{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}]}}",

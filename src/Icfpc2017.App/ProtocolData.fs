@@ -45,6 +45,7 @@ type Map = {
 
 type Settings = {
     futures : bool
+    splurges : bool
 }
 
 type SetupIn = {
@@ -72,9 +73,15 @@ type Pass = {
     punter : Color
 }
 
+type Splurge = {
+    punter: Color
+    route: VertexId array
+}
+
 type Move =
     | Claim of claim : Claim
     | Pass of pass : Pass
+    | Splurge of splurge : Splurge
 
 type Moves = {
     moves : Move array
@@ -199,10 +206,19 @@ let serializePass (p : Pass) : JObject =
             JObject(
                 JProperty("punter", p.punter))))
 
+
+let serializeSplurge (s : Splurge) : JObject =
+    JObject(
+        JProperty("splurge",
+            JObject(
+                JProperty("punter", s.punter),
+                JProperty("routes", serializeArray s.route id))))
+
 let serializeMove (m : Move) : JObject =
     match m with
     | Claim claim -> serializeClaim claim
     | Pass pass -> serializePass pass
+    | Splurge splurge -> serializeSplurge splurge
 
 let serializeMoves (m : Moves) : JObject =
     JObject(
@@ -213,13 +229,10 @@ let serializeMoveIn (m : MoveIn) : JObject =
         JProperty("move", serializeMoves m.move))
 
 let serializeMoveOut (m : MoveOut) : JObject =
-    let o =
-        match m.move with
-        | Claim claim -> serializeClaim claim
-        | Pass pass -> serializePass pass
-    in match m.state with
-       | Some state -> o.Add(JProperty("state", state)); o
-       | None -> o
+    let o = serializeMove m.move
+    match m.state with
+    | Some state -> o.Add(JProperty("state", state)); o
+    | None -> o
 
 let serializeScore (s : Score) : JObject =
     JObject(
@@ -303,11 +316,14 @@ let deserializeMap (o : JObject) : Map =
     }
 
 let deserializeSettings (o : JObject) =
-    if isNull o then { futures = false }
+    if isNull o
+    then {futures=false; splurges=false}
     else
-    {
-        futures = o.["futures"].ToObject<bool>()
-    }
+        let futures =
+            not (isNull o.["futures"]) && o.["futures"].ToObject<bool>()
+        let splurges =
+            not (isNull o.["splurges"]) && o.["splurges"].ToObject<bool>()
+        {futures=futures; splurges=splurges}
 
 let deserializeState (o : JObject) =
     if isNull o.["state"] then None else Some (o.["state"].ToObject<string> ())
@@ -333,6 +349,11 @@ let deserializeMove (o : JObject) : Move =
     | "pass" ->
         Pass {
             punter = v.["punter"].ToObject<Color>()
+        }
+    | "splurge" ->
+        Splurge {
+            punter = v.["punter"].ToObject<Color>()
+            route = convertArray o.["route"] id
         }
     | x -> raise (exn x)
 
