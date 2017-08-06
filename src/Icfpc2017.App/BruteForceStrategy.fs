@@ -43,5 +43,5 @@ let bruteForce3 =
         (Graph.unclaimed graph |> Seq.maxBy weight, Map.empty)
     )
 
-let combinedForce = 
+let combinedForce =
     Strategy.mixSlowFastTimeout "combinedForce" 500 bruteForce3 bruteForce1

@@ -136,6 +136,8 @@ module Graph =
          Colors=Map.empty;
          AdjacentEdges=buildAdjacentEdges vertices edges}
 
+    let vertex {Vertices=vertices} vid: Vertex.T = vertices.[vid]
+
     let vertices {Vertices=vertices} = vertices
     let sources {Sources=sources} = sources
     let edges {Edges=es} = es
