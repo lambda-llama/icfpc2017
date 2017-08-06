@@ -25,7 +25,7 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
           punters = List.length strats;
           map = map;
           settings = { futures = false } } in
-    let state = Game.initialState setup
+    let state = Game.initialState setup Map.empty // TODO: pass the default state
     let nSteps = Array.length map.rivers
     let initStrat i (t: Strategy.T) = (i, t.name, t.init state.Graph)
     let endGame = simulateSteps 0 nSteps state (List.mapi initStrat strats)

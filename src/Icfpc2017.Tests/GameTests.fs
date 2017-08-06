@@ -34,5 +34,5 @@ module StateTests =
             settings = { futures = true }
         }
 
-        let state = initialState setup
+        let state = initialState setup Map.empty
         Assert.That(state.Serialize () |> State.Deserialize, Is.EqualTo state)

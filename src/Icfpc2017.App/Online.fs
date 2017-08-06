@@ -25,11 +25,11 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
             | message -> failwithf "Unexpected response: %A\n" message
         in go initialState
 
-let run host port strategy =
+let run host port (strategy : Strategy.T) =
     let p = Pipe.connect host port
     Offline.handshake p
     let (ProtocolData.Setup setup) = Pipe.read p
-    let initialState = Game.initialState setup
+    let initialState = Game.initialState setup strategy.defaultState
     Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None; futures=[||]})
     let (finalState, scores) = play p setup.punter strategy initialState
     let scores =

@@ -15,7 +15,7 @@ let run (strategy: Strategy.T) =
     handshake p
     match Pipe.read p with
     | ProtocolData.Setup setup ->
-      let chunk = (Game.initialState setup).Serialize ()
+      let chunk = (Game.initialState setup strategy.defaultState).Serialize ()
       Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some chunk; futures=[||]})
     | ProtocolData.RequestMove {move=move; state=Some chunk} ->
       let state = Game.applyMoves (Game.State.Deserialize chunk) move.moves

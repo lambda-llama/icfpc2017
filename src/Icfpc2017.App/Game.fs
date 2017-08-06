@@ -37,7 +37,7 @@ type State = {
     member s.Serialize () =
         JsonConvert.SerializeObject (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
 
-let initialState (setup: ProtocolData.SetupIn) =
+let initialState (setup: ProtocolData.SetupIn) (defaultStrategyState: Map<string, string>) =
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
     let vertices =
         setup.map.sites
@@ -57,7 +57,7 @@ let initialState (setup: ProtocolData.SetupIn) =
         Me = setup.punter
         NumPlayers = setup.punters
         Settings = setup.settings
-        StrategyState = Map.empty
+        StrategyState = defaultStrategyState
         TimeoutsCount = 0
         TimeUsedLastMoveFraction = 0.0
     }
