@@ -84,9 +84,10 @@ let applyClaim s (claim: ProtocolData.Claim) =
 let applyMoves = Array.fold (fun s move ->
     match move with
     | ProtocolData.Claim claim -> applyClaim s claim
-    | ProtocolData.Pass {punter=punter} ->
-      (* REMOVE BEFORE FINAL SUBMISSION *)
-      if punter = s.Me then failwith "PASS" else s)
+    | _ -> s)
+    // | ProtocolData.Pass {punter=punter} ->
+    //   (* REMOVE BEFORE FINAL SUBMISSION *)
+    //   if punter = s.Me then failwith "PASS" else s)
 
 let score2 game (dist: Map<int, int[]>) (reach: Map<int, int[]>) =
     let (sources, sinks) = Array.partition Vertex.isSource (Graph.vertices game.Graph)

@@ -11,7 +11,7 @@ let bruteForce1 =
             let reach = Traversal.shortestPaths (Graph.subgraph graph me)
             Game.score2 {game with Game.Graph = graph } dists reach
         in
-        (Graph.unclaimed graph |> Seq.maxBy weight, Map.empty)
+        (Graph.unclaimed graph |> Seq.maxBy weight, game.StrategyState)
     )
 
 let makeNotEmpty xs = Seq.append xs (Seq.ofList [0])
@@ -40,7 +40,7 @@ let bruteForce3 =
             |> Seq.max
             |> (fun score -> (score, tieScore))
         in
-        (Graph.unclaimed graph |> Seq.maxBy weight, Map.empty)
+        (Graph.unclaimed graph |> Seq.maxBy weight, game.StrategyState)
     )
 
 let combinedForce =
