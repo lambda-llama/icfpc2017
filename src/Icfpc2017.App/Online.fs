@@ -12,6 +12,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         let step =
             time "Strategy.Init" (fun () -> strategy.init initialState.Graph)
         let rec go serializedState =
+            let sw = System.Diagnostics.Stopwatch.StartNew()
             let currState =
                 time "State.Deserialize" (fun () -> Game.State.Deserialize(serializedState))
             match Pipe.read p with
@@ -27,6 +28,8 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                 Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
                 let newState = { nextState with StrategyState = newStrategyState }
                 let blob = time "State.Serialize" newState.Serialize
+                sw.Stop()
+                eprintfn "Step.Total: %dms" sw.ElapsedMilliseconds
                 go blob
             | ProtocolData.Stop {stop=stop} ->
                 (Game.applyMoves currState stop.moves, stop.scores)
