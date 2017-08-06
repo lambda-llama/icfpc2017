@@ -12,7 +12,7 @@ status_pattern = re.compile("""(\d+)\/(\d+)""")
 map_pattern = re.compile("""/(\w+).json""")
 STRATEGY = None
 
-wins = defaultdict(int)
+wins = {}
 games = defaultdict(int)
 
 def get_enemies(s):
@@ -53,20 +53,23 @@ def get_score(port, strategy):
         return None
 
 def print_stats(strategy):
-    for key, total_games in games.iteritems():
-        enemy, map_name = key
-        print "strategy: {}, enemy: {}, map: {}".format(strategy, enemy, map_name)
-        print "\ttotal games: {}".format(total_games)
-        print "\twins: {}".format(wins[key])
+    for map_name in games:
+        print 'strategy: {}, map_name: {}, wins: {}/{}'.format(strategy, map_name, sum(wins[map_name].itervalues()), sum(games[map_name].itervalues()))
+        for enemy in games[map_name]:
+            print "\tagainst {} wins: {}/{}".format(enemy, wins[map_name][enemy], games[map_name][enemy])
 
 def thread_func(strategy, room):
     result = get_score(room.port, strategy)
-    #print result
     if result is not None:
         me, scores = result
         for enemy in room.enemies:
-            games[(enemy, room.map_name)] += 1
-            wins[(enemy, room.map_name)] += 1 if scores[me] == max(scores) else 0
+            if room.map_name not in games:
+                games[room.map_name] = defaultdict(int)
+            if room.map_name not in wins:
+                wins[room.map_name] = defaultdict(int)
+
+            games[room.map_name][enemy] += 1
+            wins[room.map_name][enemy] += 1 if scores[me] == max(scores) else 0
 
 if __name__ == '__main__':
     import sys
