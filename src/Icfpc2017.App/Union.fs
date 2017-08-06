@@ -1,27 +1,18 @@
 module Union
 
 type T = {
-    Mines: Graph.VertexId list
-    Sites: Graph.VertexId list
+    Sources: int array
+    Sites: int array
 }
 
- let create (v: Graph.Vertex) = 
-    match v.IsSource with
-    | true -> { Mines = [int v.Id]; Sites = [] }
-    | _ -> { Mines = []; Sites = [int v.Id] }
-
-let getOneSideScore (mines: Graph.VertexId list) (sites: Graph.VertexId list) (dist: Map<Graph.VertexId, int[]>) = 
+let getOneSideScore (u1: T) (u2: T) (dist: Map<int, int[]>) = 
     let mutable sum = 0 in
-    for m in mines do
-        for s in sites do
+    for m in u1.Sources do
+        for s in u2.Sources do
             let d = dist.[m].[int s] in
             sum <- sum + d * d
     sum
 
 let getScore union1 union2 dist =
-    getOneSideScore union1.Mines union2.Sites dist + getOneSideScore union2.Mines union1.Sites dist
-
-let merge (union1: T) (union2: T) = 
-    { Mines = union1.Mines@union2.Mines; Sites = union1.Sites@union2.Sites }
-
+    getOneSideScore union1 union2 dist + getOneSideScore union2 union1 dist
  

@@ -6,18 +6,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Union.fs" />
     <Compile Include="Pervasives.fs" />
     <Compile Include="UnionFind.fs" />
     <Compile Include="ProtocolData.fs" />
     <Compile Include="Graphs.fs" />
-    <!-- <Compile Include="Union.fs" /> -->
+    <!-- <Compile Include="MinTreeEdgeScorer.fs" /> -->
     <!-- <Compile Include="FastUnion.fs" /> -->
     <Compile Include="Game.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="BruteForceStrategy.fs" />
     <Compile Include="GrowFromMinesStrategy.fs" />
     <Compile Include="MinimaxStrategy.fs" />
-    <!-- <Compile Include="GreadyStrategy.fs" /> -->
+    <Compile Include="GreadyStrategy.fs" />
     <Compile Include="MixedStrategy.fs" />
     <Compile Include="Strategies.fs" />
     <Compile Include="Pipe.fs" />
