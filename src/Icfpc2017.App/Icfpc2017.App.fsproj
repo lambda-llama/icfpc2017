@@ -14,6 +14,8 @@
     <!-- <Compile Include="FastUnion.fs" /> -->
     <Compile Include="Game.fs" />
     <Compile Include="Strategy.fs" />
+    <Compile Include="BruteForceStrategy.fs" />
+    <Compile Include="GrowFromMinesStrategy.fs" />
     <Compile Include="MinimaxStrategy.fs" />
     <!-- <Compile Include="GreadyStrategy.fs" /> -->
     <Compile Include="MixedStrategy.fs" />

@@ -39,8 +39,8 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
 let run mapName =
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
     let competitors = [
-        Strategy.bruteForce1
-        Strategy.bruteForce3
+        BruteForceStrategy.bruteForce1
+        BruteForceStrategy.bruteForce3
         MinimaxStrategy.minimax
         // Strategy.randomEdge
     ]

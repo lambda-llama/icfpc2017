@@ -19,4 +19,4 @@ let private mix name cutoff (slow: Strategy.T) (fast: Strategy.T): Strategy.T = 
 }
 
 let mixedStrategy: Strategy.T =
-    mix "mixed" 5 minimax growFromMines
+    mix "mixed" 5 minimax GrowFromMinesStrategy.growFromMines
