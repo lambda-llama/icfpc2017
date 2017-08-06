@@ -10,12 +10,9 @@ let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Gam
     if nStep = totalSteps then game
     else
         printf "Step %d: %s\n" nStep name
-        let (edge, newStrategyState) = step { game with Me = me }
-        let (u, v) = Edge.ends edge
+        let ((eu, ev), nextState) = Game.applyStrategyStep {game with Me=me} step
         let nextState =
-            Game.applyClaim
-                { game with StrategyState = newStrategyState }
-                { punter = me; source = uint32 u; target = uint32 v }
+            Game.applyClaim nextState {punter=me; source=eu; target=ev}
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
 
 
