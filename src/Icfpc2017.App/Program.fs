@@ -55,20 +55,21 @@ let online host port strategy =
 
 let offline (strategy: Strategy.T) =
     let p = Pipe.std ()
-    do handshake p
-       match Pipe.read p with
-       | ProtocolData.Setup setup ->
-         let state = (Game.initialState setup).Serialize ()
-         Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some state; futures=[||]})
-       | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
-         let currState = Game.State.Deserialize state
-         (* let nextState = Game.applyMoveIn currState moveIn
-         let (source, target) = strategy.init currState.Graph nextState |> Edge.ends *)
-         (* let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
-         Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})           *)
-         ()
-       | _ -> ()
-       Pipe.close p
+    handshake p
+    match Pipe.read p with
+    | ProtocolData.Setup setup ->
+      let chunk = (Game.initialState setup).Serialize ()
+      Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some chunk; futures=[||]})
+    | ProtocolData.RequestMove {move=move; state=Some chunk} ->
+      let state = Game.applyMoves (Game.State.Deserialize chunk) move.moves
+      let step = strategy.init state.Graph
+      let (u, v) = step state |> Edge.ends
+      let vIndex = state.VIndex
+      let (eu, ev) = (vIndex.e(u), vIndex.e(v))
+      let nextMove = ProtocolData.Claim {punter=state.Me; source=eu; target=ev}
+      Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (state.Serialize ())})
+    | _ -> ()
+    Pipe.close p
 
 let runSimulation mapName =
     let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
