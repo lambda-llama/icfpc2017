@@ -3,6 +3,7 @@ module Online
 open System
 
 open Graphs
+open Pervasives
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
@@ -25,11 +26,19 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
             | message -> failwithf "Unexpected response: %A\n" message
         in go initialState
 
-let run host port (strategy : Strategy.T) =
+let rec addExtra (state: Map<string, string>) (extra: string list): Map<string, string> =
+    match extra with
+    | Prefix "--" key :: value :: rest -> addExtra (Map.add key value state) rest
+    | [] -> state
+    | [Prefix "--" key] -> failwithf "No argument given for key '%s'" key
+    | [keyish] -> failwithf "Unknown option '%s', did you mean '--%s VALUE'?" keyish keyish
+    | [keyish; value] -> failwithf "Unknown option '%s', did you mean '--%s %s'?" keyish keyish value
+
+let run host port (strategy : Strategy.T) (extra: string list) =
     let p = Pipe.connect host port
     Offline.handshake p
     let (ProtocolData.Setup setup) = Pipe.read p
-    let initialState = Game.initialState setup strategy.defaultState
+    let initialState = Game.initialState setup (addExtra strategy.defaultState extra)
     Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None; futures=[||]})
     let (finalState, scores) = play p setup.punter strategy initialState
     let scores =

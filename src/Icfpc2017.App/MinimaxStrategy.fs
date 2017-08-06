@@ -105,8 +105,11 @@ let weighEdges (state: State): int array =
             acc
         ) (Array.zeroCreate <| Graph.nEdges state.Graph)
 
+[<Literal>]
+let EDGE_CAP = "edge-cap"
+
 let defaultState =
-    ["edge_cap", "30"]
+    [EDGE_CAP, "30"]
     |> Map.ofList
 
 let minimax =
@@ -116,7 +119,7 @@ let minimax =
         let m =
             Minimax.create
                 heuristic
-                (fun s _ -> getMoves (weighEdges game) s (int game.StrategyState.["edge_cap"]))
+                (fun s _ -> getMoves (weighEdges game) s (int game.StrategyState.[EDGE_CAP]))
                 (fun p -> p = game.Me)
         let edge =
             Minimax.run m game game.Me depth
@@ -139,7 +142,7 @@ let minimax2 =
                     heuristic
                     (fun s p ->
                         if p = game.Me then [||]
-                        else getMoves (weighEdges game) s (int game.StrategyState.["edge_cap"]))
+                        else getMoves (weighEdges game) s (int game.StrategyState.[EDGE_CAP]))
                     (fun p -> p = player)))
         let scores =
             setups
@@ -154,7 +157,7 @@ let minimax2 =
                 heuristic
                 (fun s p ->
                     if p <> game.Me && p <> worstEnemy then [||]
-                    else getMoves (weighEdges game) s (int game.StrategyState.["edge_cap"]))
+                    else getMoves (weighEdges game) s (int game.StrategyState.[EDGE_CAP]))
                 (fun p -> p = game.Me)
         let edge =
             Minimax.run m game game.Me depth
