@@ -12,11 +12,11 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         let step =
             time "Strategy.Init" (fun () -> strategy.init initialState.Graph)
         let rec go serializedState =
-            let sw = System.Diagnostics.Stopwatch.StartNew()
-            let currState =
-                time "State.Deserialize" (fun () -> Game.State.Deserialize(serializedState))
             match Pipe.read p with
             | ProtocolData.RequestMove {move=move} ->
+                let sw = System.Diagnostics.Stopwatch.StartNew()
+                let currState =
+                    time "State.Deserialize" (fun () -> Game.State.Deserialize(serializedState))
                 let nextState =
                     time "State.ApplyMoves" (fun () -> Game.applyMoves currState move.moves)
                 let vIndex = currState.VIndex
@@ -26,16 +26,22 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                 let (eu, ev) = (vIndex.e(u), vIndex.e(v))
                 let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
                 Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
-                let newState = { nextState with StrategyState = newStrategyState }
+                let newState = { nextState with StrategyState = newStrategyState; TimeoutsCount = 0 }
                 let blob = time "State.Serialize" newState.Serialize
                 sw.Stop()
-                eprintfn "Step.Total: %dms" sw.ElapsedMilliseconds
+                eprintfn "Step.Total (minus deserialization): %dms" sw.ElapsedMilliseconds
                 go blob
             | ProtocolData.Stop {stop=stop} ->
+                let currState =
+                    time "State.Deserialize" (fun () -> Game.State.Deserialize(serializedState))
                 (Game.applyMoves currState stop.moves, stop.scores)
             | ProtocolData.Timeout { timeout=timeout } ->
-                eprintfn "Timed out: %d" timeout
-                go serializedState
+                let currState =
+                    time "State.Deserialize" (fun () -> Game.State.Deserialize(serializedState))
+                eprintfn "WARNING: Timed out!"
+                let newState = { currState with TimeoutsCount = currState.TimeoutsCount + 1 }
+                let blob = time "State.Serialize" newState.Serialize
+                go blob
         in go (initialState.Serialize())
 
 let checkParam (key: string) (state: Map<string, string>): unit =

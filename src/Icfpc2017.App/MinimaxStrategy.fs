@@ -96,44 +96,102 @@ let heuristic (game: State): int =
     myScore - bestOpponentScore
 
 let weighEdges (state: State): int array =
-    Traversal.shortestPaths state.Graph
-        |> Map.toSeq
-        |> Seq.map snd
-        |> Seq.fold (fun acc arr ->
-            for i in [0..arr.Length - 1] do
-                acc.[i] <- acc.[i] + arr.[i]
-            acc
-        ) (Array.zeroCreate <| Graph.nEdges state.Graph)
+    Array.zeroCreate (Graph.nEdges state.Graph)
 
 [<Literal>]
 let EDGE_CAP = "edge-cap"
+[<Literal>]
+let DEPTH_CAP = "depth-cap"
+[<Literal>]
+let SCORING_CAP = "scoring-cap"
+[<Literal>]
+let TIMEOUTS_COUNT = "timeouts-count"
 
 let defaultState =
-    [EDGE_CAP, "30"]
-    |> Map.ofList
+    [
+        EDGE_CAP, "30"
+        DEPTH_CAP, "10"
+        TIMEOUTS_COUNT, "0"
+    ]|> Map.ofList
+
+let defaultState2 =
+    [
+        EDGE_CAP, "30"
+        SCORING_CAP, "2" // ? people * 2 moves
+        DEPTH_CAP, "5" // ? people * 5 moves
+        TIMEOUTS_COUNT, "0"
+    ]|> Map.ofList
 
 let minimax =
     Strategy.stateless "minimax" defaultState (fun game ->
+        let mutable edgeCap = int game.StrategyState.[EDGE_CAP]
+        let mutable depthCap = int game.StrategyState.[DEPTH_CAP]
+        let mutable timeoutsCount = int game.StrategyState.[TIMEOUTS_COUNT]
+        eprintfn "%d;%d;%d" edgeCap depthCap timeoutsCount
+        let newStrategyState =
+            if game.TimeoutsCount > 0 && edgeCap > 1 then
+                timeoutsCount <- timeoutsCount + 1
+                if timeoutsCount % 3 = 1 then
+                    depthCap <- (depthCap + 1) / 2
+                else
+                    edgeCap <- (edgeCap + 1) / 2
+                [
+                    EDGE_CAP, string edgeCap
+                    DEPTH_CAP, string depthCap
+                    TIMEOUTS_COUNT, string timeoutsCount
+                ]|> Map.ofList
+            else
+                game.StrategyState
         let maxDepth = Graph.unclaimed game.Graph |> Seq.length
-        let depth = int (Math.Min(10, maxDepth))
+        let depth = int (Math.Min(depthCap, maxDepth))
         let m =
             Minimax.create
                 heuristic
-                (fun s _ -> getMoves (weighEdges game) s (int game.StrategyState.[EDGE_CAP]))
+                (fun s _ -> getMoves (weighEdges game) s edgeCap)
                 (fun p -> p = game.Me)
         let edge =
             Minimax.run m game game.Me depth
             |> Array.maxBy (fun (_, s) -> s)
             |> fst
             |> Option.get
-        (edge, game.StrategyState)
+        (edge, newStrategyState)
     )
 
 let minimax2 =
-    Strategy.stateless "minimax2" defaultState (fun game ->
+    Strategy.stateless "minimax2" defaultState2 (fun game ->
+        let mutable edgeCap = int game.StrategyState.[EDGE_CAP]
+        let mutable scoringCap = int game.StrategyState.[SCORING_CAP]
+        let mutable depthCap = int game.StrategyState.[DEPTH_CAP]
+        let mutable timeoutsCount = int game.StrategyState.[TIMEOUTS_COUNT]
+        eprintfn "%d;%d;%d;%d" edgeCap scoringCap depthCap timeoutsCount
+        let newStrategyState =
+            if game.TimeoutsCount > 0 && edgeCap > 1 then
+                timeoutsCount <- timeoutsCount + 1
+                if timeoutsCount = 1 then
+                    scoringCap <- 1
+                elif timeoutsCount = 2 then
+                    depthCap <- 3
+                elif timeoutsCount = 3 then
+                    edgeCap <- edgeCap / 2
+                elif timeoutsCount = 4 then
+                    depthCap <- 2
+                elif timeoutsCount = 5 then
+                    edgeCap <- edgeCap / 2
+                elif timeoutsCount = 6 then
+                    scoringCap <- 0
+                else
+                    edgeCap <- (edgeCap + 1) / 2
+                [
+                    EDGE_CAP, string edgeCap
+                    SCORING_CAP, string scoringCap
+                    DEPTH_CAP, string depthCap
+                    TIMEOUTS_COUNT, string timeoutsCount
+                ]|> Map.ofList
+            else
+                game.StrategyState
         let maxDepth = Graph.unclaimed game.Graph |> Seq.length
         // Find worst enemy - our move is the first, so try to maximize each enemy's potential threat
-        let depth = int (Math.Min(game.NumPlayers * 2, maxDepth))
+        let depth = int (Math.Min(game.NumPlayers * scoringCap, maxDepth))
         let setups =
             [0..game.NumPlayers - 1]
             |> List.filter (fun p -> p <> game.Me)
@@ -142,7 +200,7 @@ let minimax2 =
                     heuristic
                     (fun s p ->
                         if p = game.Me then [||]
-                        else getMoves (weighEdges game) s (int game.StrategyState.[EDGE_CAP]))
+                        else getMoves (weighEdges game) s edgeCap)
                     (fun p -> p = player)))
         let scores =
             setups
@@ -151,18 +209,18 @@ let minimax2 =
             scores
             |> List.maxBy snd
             |> fst
-        let depth = int (Math.Min(game.NumPlayers * 5, maxDepth))
+        let depth = int (Math.Min(game.NumPlayers * depthCap, maxDepth))
         let m =
             Minimax.create
                 heuristic
                 (fun s p ->
                     if p <> game.Me && p <> worstEnemy then [||]
-                    else getMoves (weighEdges game) s (int game.StrategyState.[EDGE_CAP]))
+                    else getMoves (weighEdges game) s edgeCap)
                 (fun p -> p = game.Me)
         let edge =
             Minimax.run m game game.Me depth
             |> Array.maxBy (fun (_, s) -> s)
             |> fst
             |> Option.get
-        (edge, game.StrategyState)
+        (edge, newStrategyState)
     )
