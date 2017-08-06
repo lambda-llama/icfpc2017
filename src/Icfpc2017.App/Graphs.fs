@@ -5,7 +5,6 @@ open System.IO
 open System.Collections.Generic
 open System.Threading
 
-
 open Pervasives
 
 type Color = ProtocolData.Color
@@ -70,11 +69,14 @@ module Graph =
         vertices
         |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
 
+    let defaultFilter e = true
+
     type T = private {
         CancelationToken: CancellationToken option
         Vertices: Vertex.T array
         Sources: int array
         Edges: Edge.T array
+        EdgeFilter: Edge.T -> bool
         Colors: Map<int, Color>
         AdjacentEdges: Edge.T array array
     } with
@@ -84,7 +86,7 @@ module Graph =
             let edges = r.ReadArray (fun _ -> Edge.T.Read r)
             let colors = r.ReadMap (fun _ -> (r.ReadInt32 (), r.ReadInt32 ()))
             {Vertices=vertices; Sources=sources; Edges=edges;
-             Colors=colors;
+             EdgeFilter=defaultFilter; Colors=colors;
              AdjacentEdges=buildAdjacentEdges vertices edges;
              CancelationToken=None}
 
@@ -106,6 +108,7 @@ module Graph =
         {Vertices=vertices;
          Sources=sources;
          Edges=edges;
+         EdgeFilter=defaultFilter;
          Colors=Map.empty;
          AdjacentEdges=buildAdjacentEdges vertices edges;
          CancelationToken=None}
@@ -117,13 +120,14 @@ module Graph =
         {Vertices=vertices;
          Sources=sources;
          Edges=edges;
+         EdgeFilter=defaultFilter;
          Colors=Map.empty;
          AdjacentEdges=buildAdjacentEdges vertices edges;
          CancelationToken=None}
 
     let vertex {Vertices=vs} vid: Vertex.T = vs.[vid]
     let private vertices {Vertices=vs} = vs
-    let private edges {Edges=es} = es
+    let private edges {Edges=es} = Array.toSeq es
 
     let sources {Sources=sources}: int seq = Array.toSeq sources
     let sinks {Sources=sources; Vertices=vs}: int seq =
@@ -132,30 +136,26 @@ module Graph =
         |> Seq.filter (fun vid -> Array.contains vid sources |> not)
 
     let nVertices = vertices >> Array.length
-    let nEdges = edges >> Array.length
+    let nEdges = edges >> Seq.length
 
     let edgeId {Edges=es} uv =
         (* XXX normalize ends. *)
         let uv = Edge.create 0 uv |> Edge.ends
         Array.find (fun e -> Edge.ends e = uv) es |> Edge.id
 
-    let edgeColor {Colors=cs} e = cs.TryFind (Edge.id e)
+    let edgeColor {Colors=cs; EdgeFilter=ef} edge =
+        if ef edge
+        then cs.TryFind (Edge.id edge)
+        else None
 
-    (** Focus on a subgraph of a specific color. *)
-    let subgraph (g : T) (color: Color): T =
-        (* TODO: ideally just filter in [[adjacent]]. *)
-        let subColors = Map.filter (fun _ -> (=) color) g.Colors
-        let subEdges =
-            g.Edges
-            |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors)
-        {g with Edges=subEdges; Colors=subColors; AdjacentEdges=buildAdjacentEdges (vertices g) subEdges}
-
-    let adjacentEdges {AdjacentEdges=adj} vid: Edge.T seq = Array.toSeq adj.[vid]
+    let adjacentEdges {AdjacentEdges=adj; EdgeFilter=ef} vid: Edge.T seq =
+        Array.toSeq adj.[vid] |> Seq.filter ef
 
     let adjacent g vid =
         adjacentEdges g vid |> Seq.map (fun e -> Edge.opposite e vid)
 
-    let isClaimed {Colors=cs} edge: bool = cs.ContainsKey (Edge.id edge)
+    let isClaimed {Colors=cs; EdgeFilter=ef} edge: bool =
+        ef edge && cs.ContainsKey (Edge.id edge)
 
     let isClaimedBy punter g edge: bool =
         match edgeColor g edge with
@@ -163,14 +163,20 @@ module Graph =
         | None -> false
 
     let claimEdge ({Colors=cs} as g) punter eid: T =
-        let _ = g.CancelationToken |> Option.map (fun t -> t.ThrowIfCancellationRequested())
+        g.CancelationToken
+            |> Option.map (fun t -> t.ThrowIfCancellationRequested ())
+            |> ignore
         {g with Colors=Map.add eid punter cs}
 
-    let claimedBy ({Edges=es} as g) punter: Edge.T seq =
-        Array.toSeq es |> Seq.filter (isClaimedBy punter g)
+    let claimedBy g punter: Edge.T seq =
+        edges g |> Seq.filter (isClaimedBy punter g)
 
-    let unclaimed ({Edges=es} as g): Edge.T seq =
-        Array.toSeq es |> Seq.filter (isClaimed g >> not)
+    let unclaimed g: Edge.T seq =
+        edges g |> Seq.filter (isClaimed g >> not)
+
+    (** Focus on a subgraph of a specific punter. *)
+    let subgraph (g : T) (punter: Color): T =
+        {g with EdgeFilter=isClaimedBy punter g}
 
     let private colors = [|
         "blue"; "green"; "yellow"; "cyan"; "dimgrey"; "margenta"; "indigo"; "pink";
@@ -208,8 +214,8 @@ module Graph =
                 | None -> ("black", 1)
             in sprintf "  %d -- %d [color=\"%s\", penwidth=\"%d\"];" u v color width
         in
-        let nodes = vertices graph |> Array.map renderVertex |> String.concat "\n"
-        let edges = edges graph |> Array.map renderEdge |> String.concat "\n"
+        let nodes = vertices graph |> Seq.map renderVertex |> String.concat "\n"
+        let edges = edges graph |> Seq.map renderEdge |> String.concat "\n"
         sprintf "graph {\n%s\n%s\n}" nodes edges
 
 module Traversal =

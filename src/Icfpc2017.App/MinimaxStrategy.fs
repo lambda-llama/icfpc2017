@@ -12,7 +12,7 @@ module Minimax =
         isMaximizing: Color -> bool
     }
 
-    let create score (getMoves: State ->Color -> Edge.T array) isMaximizing =
+    let create score (getMoves: State -> Color -> Edge.T array) isMaximizing =
         {
             score = score
             getMoves = (fun s p ->
@@ -74,11 +74,13 @@ let getUnclaimedEdges (game: State): Edge.T seq =
             let (a, b) = Edge.ends e
             isConnected game a || isConnected game b)
 
-let getMoves (edgeWeights : int array) (game: State) (cap: int): Edge.T array =
-    getUnclaimedEdges game
-    |> Array.ofSeq
-    |> Array.sortByDescending (Edge.id >> (fun id -> edgeWeights.[id]))
-    |> Array.truncate cap
+let getMoves (edgeWeights : Map<int, int>) (game: State) (cap: int): Edge.T array =
+    if edgeWeights.IsEmpty
+    then getUnclaimedEdges game |> Seq.truncate cap |> Seq.toArray
+    else getUnclaimedEdges game
+         |> Array.ofSeq
+         |> Array.sortByDescending (Edge.id >> (fun id -> edgeWeights.[id]))
+         |> Array.truncate cap
 
 let heuristic (game: State): int =
     let graph = game.Graph
@@ -95,8 +97,8 @@ let heuristic (game: State): int =
     let bestOpponentScore = Array.max scores
     myScore - bestOpponentScore
 
-let weighEdges (state: State): int array =
-    Array.zeroCreate (Graph.nEdges state.Graph)
+let weighEdges (state: State): Map<int, int> =
+    Map.empty
 
 [<Literal>]
 let EDGE_CAP = "edge-cap"
