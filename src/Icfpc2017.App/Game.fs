@@ -16,9 +16,9 @@ type Index<'a when 'a : comparison> = {
         let eToI = iToE
                    |> Array.mapi (fun i item -> (item, i))
                    |> Map.ofArray
-        {eToI=Map.empty; iToE=iToE}
+        {eToI=eToI; iToE=iToE}
 
-    member x.i (key: 'a) = Array.findIndex ((=) key) x.iToE
+    member x.i (key: 'a) = x.eToI.[key]
     member x.e (key: int) = x.iToE.[key]
 
 type VertexId = ProtocolData.VertexId
