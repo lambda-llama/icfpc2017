@@ -68,13 +68,18 @@ let isConnected (game: State) vertex: bool =
         Graph.adjacentEdges game.Graph vertex
         |> Seq.exists (Graph.isClaimed game.Graph)
 
-let getUnclaimedEdges (game: State) (player: Color): Edge.T array =
+let getUnclaimedEdges (game: State): Edge.T array =
     (Graph.edges game.Graph)
     |> Array.filter (Graph.isClaimed game.Graph >> not)
     |> Array.filter
         (fun e ->
             let (a, b) = Edge.ends e
             isConnected game a || isConnected game b)
+
+let getMoves (edgeWeights : int array) (game: State): Edge.T array =
+    getUnclaimedEdges game
+    |> Array.sortByDescending (Edge.id >> (fun id -> edgeWeights.[id]))
+    |> Array.truncate 30
 
 let heuristic (game: State): int =
     let graph = game.Graph
@@ -91,6 +96,16 @@ let heuristic (game: State): int =
     let bestOpponentScore = scores |> Array.max
     myScore - bestOpponentScore
 
+let weighEdges (state: State): int array =
+    Traversal.shortestPaths state.Graph
+        |> Map.toSeq
+        |> Seq.map snd
+        |> Seq.fold (fun acc arr ->
+            for i in [0..arr.Length - 1] do
+                acc.[i] <- acc.[i] + arr.[i]
+            acc
+        ) (Array.zeroCreate (Graph.edges state.Graph).Length)
+
 let minimax =
     Strategy.stateless "minimax" (fun game ->
         let maxDepth =
@@ -101,7 +116,7 @@ let minimax =
         let m =
             Minimax.create
                 heuristic
-                getUnclaimedEdges
+                (fun s _ -> getMoves (weighEdges game) s)
                 (fun p -> p = game.Me)
         Minimax.run m game game.Me depth
         |> Array.maxBy (fun (_, s) -> s)
@@ -123,7 +138,7 @@ let minimax2 =
             |> List.map (fun player ->
                 (player, Minimax.create
                     heuristic
-                    (fun s p -> if p = game.Me then [||] else getUnclaimedEdges s p)
+                    (fun s p -> if p = game.Me then [||] else getMoves (weighEdges game) s)
                     (fun p -> p = player)))
         let scores =
             setups
@@ -136,7 +151,7 @@ let minimax2 =
         let m =
             Minimax.create
                 heuristic
-                (fun s p -> if p <> game.Me && p <> worstEnemy then [||] else getUnclaimedEdges s p)
+                (fun s p -> if p <> game.Me && p <> worstEnemy then [||] else getMoves (weighEdges game) s)
                 (fun p -> p = game.Me)
         Minimax.run m game game.Me depth
         |> Array.maxBy (fun (_, s) -> s)
