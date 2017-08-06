@@ -176,6 +176,9 @@ module Graph =
     let claimEdge ({Colors=cs} as g) punter eid: T =
         {g with Colors=Map.add eid punter cs}
 
+    let claimedBy ({Edges=es} as g) punter: Edge.T seq =
+        Array.toSeq es |> Seq.filter (isClaimedBy punter g)
+
     let unclaimed ({Edges=es} as g): Edge.T seq =
         Array.toSeq es |> Seq.filter (isClaimed g >> not)
 

@@ -26,7 +26,7 @@ let growFromMines =
         in
 
         let edge =
-            if Array.exists isOurEdge (Graph.edges graph)
+            if not (Seq.isEmpty <| Graph.claimedBy graph me)
             then Graph.unclaimed graph |> Seq.maxBy weight
             else
                 let mine =
