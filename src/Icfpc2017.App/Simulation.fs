@@ -36,8 +36,8 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
         Game.score2 endGame dists reach
     )
 
-let run mapName =
-    let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
+let run mapPath =
+    let map = System.IO.File.ReadAllText mapPath
     let competitors = [
         BruteForceStrategy.bruteForce1
         BruteForceStrategy.bruteForce3

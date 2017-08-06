@@ -2,8 +2,7 @@
 
 [<EntryPoint>]
 let main = function
-| [|"--sim"; |] -> Simulation.run "lambda"; 0
-| [|"--sim"; map |] -> Simulation.run map; 0
+| [|"--sim"; mapPath|] -> Simulation.run mapPath; 0
 | [|port; strategyName|] when Map.containsKey strategyName Strategies.all ->
     Online.run "punter.inf.ed.ac.uk" (int port) Strategies.all.[strategyName]; 0
 | [||] -> Offline.run BruteForceStrategy.bruteForce1; 0
