@@ -1,8 +1,5 @@
 module Game
 
-open MessagePack
-open MessagePack.Resolvers
-open MessagePack.FSharp
 open Newtonsoft.Json
 
 open Graphs
