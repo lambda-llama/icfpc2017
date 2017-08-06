@@ -31,9 +31,6 @@ module Minimax =
             | None -> state // pass
         let nextPlayer = (player + 1) % state.NumPlayers
 
-        let min x y = if x < y then x else y
-        let max x y = if x > y then x else y
-
         if (depth = 0) then
             m.score newState
         elif m.isMaximizing player then

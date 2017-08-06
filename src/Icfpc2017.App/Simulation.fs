@@ -23,6 +23,13 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
           map = map;
           settings = { futures = false; splurges = false } }
     let state = Game.initialState setup Map.empty // TODO: pass the default state
+    do
+        let g = state.Graph
+        let cc = Traversal.connectedComponents g |> Seq.toArray
+        printf "#mines %A\n" (Graph.sources g)
+        printf "#CC = %d\n" cc.Length
+        printf "#vertices %A // %A\n" (Array.map Graph.nVertices cc) (Graph.nVertices g)
+        printf "#edges %A // %A\n" (Array.map Graph.nEdges cc) (Graph.nEdges g)
     let nSteps = Array.length map.rivers
     let initStrat i (t: Strategy.T) = (i, t.name, t.init state.Graph)
     let endGame = simulateSteps 0 nSteps state (List.mapi initStrat strats)

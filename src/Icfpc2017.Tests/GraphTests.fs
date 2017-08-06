@@ -41,6 +41,21 @@ module GraphTests =
         let graph = Graph.testCreate 4 [|0; 2|] [|(0, 1); (0, 2); (1, 3)|]
         Assert.That (Graph.adjacent graph 0, Is.EqualTo <| seq [1; 2])
 
+    [<Test>]
+    let connectedComponents () =
+        let edges =
+            [|[|(0, 1); (1, 2); (0, 2)|];
+              [|(3, 4)|];
+              [|(5, 6)|]|]
+        let graph = Graph.testCreate 7 [|0; 3|] (Array.concat edges)
+
+        let components = Traversal.connectedComponents graph |> Seq.toArray
+        Assert.That (components.Length, Is.EqualTo 2)
+        Assert.That (Graph.unclaimed components.[0] |> Seq.map Edge.ends,
+                     Is.EqualTo edges.[0])
+        Assert.That (Graph.unclaimed components.[1] |> Seq.map Edge.ends,
+                     Is.EqualTo edges.[1])
+
 module TraversalTests =
     [<Test>]
     let singleEdge () =

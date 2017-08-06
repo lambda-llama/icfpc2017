@@ -138,10 +138,10 @@ module Graph =
     let nVertices = vertices >> Array.length
     let nEdges = edges >> Seq.length
 
-    let edgeId {Edges=es} uv =
+    let edgeId g uv =
         (* XXX normalize ends. *)
         let uv = Edge.create 0 uv |> Edge.ends
-        Array.find (fun e -> Edge.ends e = uv) es |> Edge.id
+        Seq.find (fun e -> Edge.ends e = uv) (edges g) |> Edge.id
 
     let edgeColor {Colors=cs; EdgeFilter=ef} edge =
         if ef edge
@@ -175,7 +175,7 @@ module Graph =
         edges g |> Seq.filter (isClaimed g >> not)
 
     (** Focus on a subgraph of a specific punter. *)
-    let subgraph (g : T) (punter: Color): T =
+    let subgraph (g: T) (punter: Color): T =
         {g with EdgeFilter=isClaimedBy punter g}
 
     let private colors = [|
@@ -219,6 +219,47 @@ module Graph =
         sprintf "graph {\n%s\n%s\n}" nodes edges
 
 module Traversal =
+    let connectedComponents (graph: Graph.T): Graph.T seq =
+        let nVertices = Graph.nVertices graph
+        let seen = Array.create nVertices false
+        let components = Array.create nVertices -1
+        let explore source =
+            let work = new Stack<int>()
+            let pushIfNeeded vid =
+                if components.[vid] = -1
+                then
+                    components.[vid] <- source
+                    work.Push vid
+
+            pushIfNeeded source
+            while work.Count <> 0 do
+                let current = work.Pop ()
+                for next in Graph.adjacent graph current do
+                    pushIfNeeded next
+
+        for source in Graph.sources graph do
+            explore source
+
+        let belongsTo edge c =
+            let (u, v) = Edge.ends edge
+            components.[u] = c  (* auto-true for [v]. *)
+        let cutout target =
+            let vertices =
+                [|for vid in 0..nVertices - 1 do
+                  if components.[vid] = target
+                  then yield Graph.vertex graph vid|]
+            if vertices.Length = 0
+            then None
+            else
+                (* HACK: this assumes no edges have been claimed. *)
+                let edges =
+                    [|for edge in Graph.unclaimed graph do
+                      if belongsTo edge target then yield edge|]
+                Some (Graph.create vertices edges)
+        (* XXX by designed this would filter out chunks of the graph
+               disconnected from the [sources]. *)
+        Graph.sources graph |> Seq.choose cutout
+
     (** Computes the shortest paths from [source] to all other vertices. *)
     let shortestPathWithPred (graph: Graph.T) (source: int) (pred: Edge.T -> bool): int array =
         let distances = Array.create (Graph.nVertices graph) -1 in
