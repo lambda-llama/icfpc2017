@@ -3,7 +3,7 @@ module BruteForceStrategy
 open Graphs
 
 let bruteForce1 =
-    Strategy.withSetup "bruteForce1" Traversal.shortestPaths (fun dists (game: Game.State) ->
+    Strategy.withSetup "bruteForce1" Map.empty Traversal.shortestPaths (fun dists (game: Game.State) ->
         let graph = game.Graph
         let me = game.Me
         let weight (edge: Edge.T) =
@@ -17,7 +17,7 @@ let bruteForce1 =
 let makeNotEmpty xs = Seq.append xs (Seq.ofList [0])
 
 let bruteForce3 =
-    Strategy.withSetup "bruteForce3" Traversal.shortestPaths (fun dists (game: Game.State) ->
+    Strategy.withSetup "bruteForce3" Map.empty Traversal.shortestPaths (fun dists (game: Game.State) ->
         let graph = game.Graph
         let me = game.Me
         let weight (edge: Edge.T) =

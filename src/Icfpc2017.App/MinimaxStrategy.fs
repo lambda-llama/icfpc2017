@@ -106,7 +106,7 @@ let weighEdges (state: State): int array =
         ) (Array.zeroCreate <| Graph.nEdges state.Graph)
 
 let minimax =
-    Strategy.stateless "minimax" (fun game ->
+    Strategy.stateless "minimax" Map.empty (fun game ->
         let maxDepth = Graph.unclaimed game.Graph |> Seq.length
         let depth = int (Math.Min(10, maxDepth))
         let m =
@@ -123,7 +123,7 @@ let minimax =
     )
 
 let minimax2 =
-    Strategy.stateless "minimax2" (fun game ->
+    Strategy.stateless "minimax2" Map.empty (fun game ->
         let maxDepth = Graph.unclaimed game.Graph |> Seq.length
         // Find worst enemy - our move is the first, so try to maximize each enemy's potential threat
         let depth = int (Math.Min(game.NumPlayers * 2, maxDepth))

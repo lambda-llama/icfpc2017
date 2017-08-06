@@ -3,7 +3,7 @@ module GrowFromMinesStrategy
 open Graphs
 
 let growFromMines =
-    Strategy.withSetup "growFromMines" Traversal.shortestPaths (fun distances {Game.Graph=graph; Game.Me=me} ->
+    Strategy.withSetup "growFromMines" Map.empty Traversal.shortestPaths (fun distances {Game.Graph=graph; Game.Me=me} ->
         let sources = Graph.sources graph in
         let isOurEdge = Graph.isClaimedBy me graph
 

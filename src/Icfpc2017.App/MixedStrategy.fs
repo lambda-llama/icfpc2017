@@ -6,7 +6,8 @@ open Game
 open Graphs
 
 let private mix name cutoff (slow: Strategy.T) (fast: Strategy.T): Strategy.T = {
-    Strategy.name = name;
+    Strategy.name = name
+    Strategy.defaultState = Map.empty
     Strategy.init = fun graph ->
         let s = slow.init graph
         let f = fast.init graph

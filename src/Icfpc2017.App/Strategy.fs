@@ -7,14 +7,21 @@ open System.Threading.Tasks
 
 type T = {
     name: string
+    defaultState: Map<string, string>
     init: Graph.T -> Game.State -> Edge.T * Map<string, string>
 }
 
-let stateless name step = { name = name; init = fun _ -> step }
-let withSetup name setup step = { name = name; init = fun initialGraph -> let data = setup initialGraph in fun game -> step data game }
+let stateless name def step = { name = name; defaultState = def; init = fun _ -> step }
+let withSetup name def setup step =
+    {
+        name = name
+        defaultState = def
+        init = fun initialGraph -> let data = setup initialGraph in fun game -> step data game
+    }
 
 let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
-    name = name;
+    name = name
+    defaultState = Map.empty
     init = fun initialGraph ->
         let s = slow.init initialGraph
         let f = fast.init initialGraph

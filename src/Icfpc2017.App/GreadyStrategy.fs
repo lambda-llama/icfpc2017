@@ -1,7 +1,7 @@
 module GreadyStrategy
 
 let greadyStrategy: Strategy.T =
-    Strategy.stateless "gready" (fun game ->
+    Strategy.stateless "gready" Map.empty (fun game ->
         let graph = game.Graph
         let getScore (edge:Graph.Edge) =
                 match edge.Color with
