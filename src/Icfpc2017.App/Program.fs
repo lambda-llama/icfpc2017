@@ -36,6 +36,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                     let sortedScoresAsStr = sortedScores |> Array.map string
                                                          |> String.concat ","
                     eprintf """{"sortedScores": "%s" "me": "%d"}\n""" sortedScoresAsStr punter
+                    currState
             | message -> failwithf "Unexpected response: %A\n" message
         in go initialState
 
@@ -45,8 +46,13 @@ let online host port strategy =
     let (ProtocolData.Setup setup) = Pipe.read p
     let initialState = Game.initialState setup
     do Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None; futures=[||]})
-       play p setup.punter strategy initialState
-       printf "We: %d" (setup.punter)
+       let finalState = play p setup.punter strategy initialState
+       let dists = Traversal.shortestPaths finalState.Graph
+       let finalScores =
+            [0..finalState.NumPlayers - 1]
+            |> List.map (fun p -> Traversal.shortestPaths (Graph.subgraph finalState.Graph p))
+            |> List.map (Game.score2 finalState dists)
+       printfn "We: %d, scores: [%s]" (setup.punter) (String.Join("; ", finalScores))
 
 let offline (strategy: Strategy.T) =
     let p = Pipe.std ()
