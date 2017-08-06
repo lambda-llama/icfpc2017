@@ -11,25 +11,25 @@ type T = private {
     OutStream: Stream
 }
 
-let debug = ref true
+let debug = ref false
 
 let connect (host: string) (port: int32): T =
     let client = new TcpClient () in
     eprintf "Connecting on port %i... " port
-    let t = 
+    let t =
         async {
-            let! () = client.ConnectAsync(host, port) |> Async.AwaitTask            
+            let! () = client.ConnectAsync(host, port) |> Async.AwaitTask
             eprintf "OK!\n"
             let stream = client.GetStream ()
             return {InStream=stream; OutStream=stream}
         }
     in Async.RunSynchronously(t)
 
-let std () = 
+let std () =
     {InStream=Console.OpenStandardInput ();
      OutStream=Console.OpenStandardOutput ()}
 
-let close (p: T): unit = 
+let close (p: T): unit =
     p.InStream.Dispose ();
     p.OutStream.Dispose ()
 
@@ -40,7 +40,7 @@ let accept (server: TcpListener): Async<T> =
         return {InStream=stream; OutStream=stream}
     }
 
-let inline retry f = 
+let inline retry f =
     let rec go f = function
     | 0 -> failwith "<>-<"
     | n -> try f () with _ -> go f (n - 1)
@@ -61,19 +61,19 @@ let commonRead (p: T) (deserialize : string -> 'a): 'a =
             message
         else
             let read = retry (fun () -> p.InStream.Read(ob, offset, ob.Length - offset))
-            readMessage ob (offset + read)        
+            readMessage ob (offset + read)
     in readMessage (readLength (StringBuilder ()) |> Array.zeroCreate) 0
 
 let read (p: T): ProtocolData.MessageIn =
     commonRead p ProtocolData.deserialize
-(* 
+(*
 let serverRead (p: T): Async<ProtocolData.MessageOut> =
     commonRead p ProtocolData.serverDeserialize *)
 
 let _write (stream: Stream) (b: byte array) =
     retry (fun () -> stream.Write(b, 0, b.Length))
 
-let commonWrite (p: T) (serialize: 'a -> string) (message: 'a): unit = 
+let commonWrite (p: T) (serialize: 'a -> string) (message: 'a): unit =
     if !debug then eprintf ">>> %A\n" message
     let input = serialize message
     let ib = Encoding.ASCII.GetBytes input

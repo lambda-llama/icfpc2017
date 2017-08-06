@@ -62,14 +62,10 @@ let applyClaim s (claim: ProtocolData.Claim) =
               |> Graph.edgeId s.Graph
     {s with Graph = Graph.claimEdge s.Graph claim.punter eid}
 
-let applyMoveIn state (moveIn: ProtocolData.MoveIn) =
-    Array.fold
-        (fun s move ->
-            match move with
-            | ProtocolData.Claim claim -> applyClaim s claim
-            | ProtocolData.Pass _ -> s)
-        state
-        moveIn.move.moves
+let applyMoves = Array.fold (fun s move ->
+    match move with
+    | ProtocolData.Claim claim -> applyClaim s claim
+    | ProtocolData.Pass _ -> s)
 
 let score2 game (dist: Map<int, int[]>) (reach: Map<int, int[]>) =
     let (sources, sinks) = Array.partition Vertex.isSource (Graph.vertices game.Graph)

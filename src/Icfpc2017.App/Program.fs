@@ -20,38 +20,38 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         let rec go currState =
             rend.dump currState
             match Pipe.read p with
-            | ProtocolData.RequestMove moves ->
-              let nextState = Game.applyMoveIn currState moves
+            | ProtocolData.RequestMove {move=move} ->
+              let nextState = Game.applyMoves currState move.moves
               let vIndex = currState.VIndex
               let (u, v) = step nextState |> Edge.ends
               let (eu, ev) = (vIndex.e(u), vIndex.e(v))
               let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
-              let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
+              Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
               go nextState
-            | ProtocolData.Stop stop ->
-                let sortedScores =
-                    stop.stop.scores
-                    |> Array.sortBy (fun x -> x.punter)
-                    |> Array.map (fun x -> x.score)
-                    |> Array.toList
-                eprintf """{"sortedScores": "%A" "me": "%d"}\n""" sortedScores punter
-                currState
+            | ProtocolData.Stop {stop=stop} ->
+              (Game.applyMoves currState stop.moves, stop.scores)
             | message -> failwithf "Unexpected response: %A\n" message
         in go initialState
 
 let online host port strategy =
     let p = Pipe.connect host port
-    let () = handshake p
+    handshake p
     let (ProtocolData.Setup setup) = Pipe.read p
     let initialState = Game.initialState setup
-    do Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None; futures=[||]})
-       let finalState = play p setup.punter strategy initialState
-       let dists = Traversal.shortestPaths finalState.Graph
-       let finalScores =
-            [0..finalState.NumPlayers - 1]
-            |> List.map (fun p -> Traversal.shortestPaths (Graph.subgraph finalState.Graph p))
-            |> List.map (Game.score2 finalState dists)
-       printfn "We: %d, scores: [%s]" (setup.punter) (String.Join("; ", finalScores))
+    Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=None; futures=[||]})
+    let (finalState, scores) = play p setup.punter strategy initialState
+    let scores =
+        scores
+        |> Array.sortBy (fun s -> s.punter)
+        |> Array.map (fun s -> s.score)
+        |> Array.toList
+    let dists = Traversal.shortestPaths finalState.Graph
+    let estimatedScores =
+         [for p in 0..finalState.NumPlayers - 1
+          -> Traversal.shortestPaths (Graph.subgraph finalState.Graph p)
+             |> Game.score2 finalState dists]
+    eprintf """{"scores": %A, "estimatedScores": %A, "me": %d}"""
+        scores estimatedScores finalState.Me
 
 let offline (strategy: Strategy.T) =
     let p = Pipe.std ()
@@ -62,8 +62,8 @@ let offline (strategy: Strategy.T) =
          Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some state; futures=[||]})
        | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
          let currState = Game.State.Deserialize state
-         let nextState = Game.applyMoveIn currState moveIn
-         let (source, target) = strategy.init currState.Graph nextState |> Edge.ends
+         (* let nextState = Game.applyMoveIn currState moveIn
+         let (source, target) = strategy.init currState.Graph nextState |> Edge.ends *)
          (* let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
          Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})           *)
          ()

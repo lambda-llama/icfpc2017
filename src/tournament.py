@@ -1,3 +1,4 @@
+import ast
 import os
 import urllib2
 import re
@@ -42,10 +43,11 @@ def get_score(port, strategy):
     try:
         s = subprocess.check_output(command, stderr=subprocess.STDOUT)
         print s
-        scores = re.search(score_pattern, s)
-        print scores.group(0), scores.group(1), scores.group(2)
-        return int(scores.group(2)), map(int, scores.group(1).split(";"))
-    except:
+        meta = ast.literal_eval(s.splitlines()[-1])
+        print meta
+        return meta["me"], meta["scores"]
+    except Exception:
+        print "FAILED", command
         return None
 
 def print_stats():
@@ -95,4 +97,3 @@ if __name__ == '__main__':
         w.join()
 
     #print acc_wins, acc_scores, acc_games
-
