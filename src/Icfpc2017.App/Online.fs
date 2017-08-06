@@ -1,5 +1,7 @@
 module Online
 
+open System
+
 open Graphs
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
@@ -34,11 +36,11 @@ let run host port strategy =
         scores
         |> Array.sortBy (fun s -> s.punter)
         |> Array.map (fun s -> s.score)
-        |> Array.toList
     let dists = Traversal.shortestPaths finalState.Graph
     let estimatedScores =
-         [for p in 0..finalState.NumPlayers - 1
+         [|for p in 0..finalState.NumPlayers - 1
           -> Traversal.shortestPaths (Graph.subgraph finalState.Graph p)
-             |> Game.score2 finalState dists]
-    eprintf """{"scores": %A, "estimatedScores": %A, "me": %d}"""
-        scores estimatedScores finalState.Me
+             |> Game.score2 finalState dists|]
+    let f (ss: int array) = String.Join (",", ss)
+    eprintf """{"scores": [%s], "estimatedScores": [%s], "me": %d}"""
+        (f scores) (f estimatedScores) finalState.Me
