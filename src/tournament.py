@@ -44,9 +44,8 @@ def get_score(port, strategy):
         s = subprocess.check_output(command, stderr=subprocess.STDOUT)
         print s
         meta = ast.literal_eval(s.splitlines()[-1])
-        print meta
         return meta["me"], meta["scores"]
-    except Exception:
+    except Exception as e:
         print "FAILED", command
         return None
 
