@@ -1,35 +1,34 @@
 module FastUnion
 
 open Graphs
+open Union
 
-type T (graph: Graph.T) =
-    let maxVertId = graph.Verts |> Array.map (fun x -> x.Id) |> Array.max |> int |> fun x->x+1
-    let part = UnionFind.Partition maxVertId
-    let unionarray : Union.T[] = [|
-                    for i in 0..maxVertId do
-                        for v in graph.Verts do
-                        if int v.Id = i
-                        then yield Union.create v|]
+type T = {
+    partition: UnionFind.Partition;
+    Unions: Map<int, Union.T>
+}
 
-    member p.TestGetUnion x = unionarray.[x]
+let getComponentVerts (graph: Graph.T) (part: UnionFind.Partition) (comp: int) =
+    [|0..Graph.nVertices graph|] |>
+    Array.filter (fun x-> part.find(x) = comp)
 
-    member p.IsInSame v1 v2 =
-        part.find(v1) = part.find(v2)
+let create (graph: Graph.T) (me: Color)=
+    let uf = UnionFind.Partition (Graph.nVertices graph)
+    for e in Graph.claimedBy graph me do
+        uf.union_by_rank (Edge.ends e)
+    let comps = [|0..Graph.nVertices graph - 1|] |> Array.map (fun x -> uf.find(x)) |> Seq.distinct
+    let unions = comps |>
+                    Seq.map (fun comp->
+                        (comp,{ Sources = getComponentVerts graph uf comp |>
+                                            Array.filter (fun x -> Vertex.isSource (Graph.vertex graph x) );
+                                Sites = getComponentVerts graph uf comp |>
+                                            Array.filter (fun x -> not (Vertex.isSource (Graph.vertex graph x)))})) |>
+                    Map.ofSeq
+    { partition = uf; Unions = unions }
 
-    member p.GetIncrement(ver1: Graph.VertexId, ver2: Graph.VertexId, dist) =
-        let v1 = int ver1
-        let v2 = int ver2
-        if p.IsInSame v1 v2
-            then 0
-            else
-                Union.getScore unionarray.[part.find(v1)] unionarray.[part.find(v2)] dist
+let getUnion (uf: T) (key: int)=
+    let p = uf.partition.find(key)
+    Map.find p uf.Unions
 
-    member p.Unite (ver1: Graph.VertexId) (ver2: Graph.VertexId) =
-        let v1 = int ver1
-        let v2 = int ver2
-        let oldP1 = part.find v1
-        let oldP2 = part.find v2
-        if part.union_by_rank (v1, v2)
-            then
-                let newP = part.find v1
-                unionarray.[newP] <- Union.merge unionarray.[oldP1] unionarray.[oldP2]
+let IsSameComponent (uf: T) (u: int) (v: int)=
+    uf.partition.find(u) = uf.partition.find(v)

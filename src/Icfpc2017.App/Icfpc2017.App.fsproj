@@ -11,9 +11,9 @@
     <Compile Include="UnionFind.fs" />
     <Compile Include="ProtocolData.fs" />
     <Compile Include="Graphs.fs" />
-    <!-- <Compile Include="MinTreeEdgeScorer.fs" /> -->
-    <!-- <Compile Include="FastUnion.fs" /> -->
     <Compile Include="Game.fs" />
+    <Compile Include="FastUnion.fs" />
+    <!-- <Compile Include="MinTreeEdgeScorer.fs" /> -->
     <Compile Include="Strategy.fs" />
     <Compile Include="BruteForceStrategy.fs" />
     <Compile Include="GrowFromMinesStrategy.fs" />
