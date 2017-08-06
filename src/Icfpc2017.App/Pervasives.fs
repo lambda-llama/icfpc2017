@@ -4,7 +4,7 @@ open System.IO
 open System.Diagnostics
 
 (* SET TO false BEFORE FINAL SUBMISSION *)
-let debug = ref true
+let debug = ref false
 
 let (|Prefix|_|) (p:string) (s:string) =
     if s.StartsWith(p) then

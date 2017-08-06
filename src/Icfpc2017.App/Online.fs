@@ -6,40 +6,27 @@ open Graphs
 open Pervasives
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
-    let sw = System.Diagnostics.Stopwatch.StartNew()
-    let rend = Game.Renderer.create "game"
-    sw.Stop()
-    eprintfn "Game.Create: %dms" sw.ElapsedMilliseconds
+    let rend =
+        time "Game.Create" (fun () -> Game.Renderer.create "game")
     fun (initialState: Game.State) ->
-        sw.Restart()
-        let step = strategy.init initialState.Graph
-        sw.Stop()
-        eprintfn "Strategy.Init: %dms" sw.ElapsedMilliseconds
+        let step =
+            time "Strategy.Init" (fun () -> strategy.init initialState.Graph)
         let rec go serializedState =
-            sw.Restart()
-            let currState = Game.State.Deserialize(serializedState)
-            sw.Stop()
-            eprintfn "State.Deserialize: %dms" sw.ElapsedMilliseconds
+            let currState =
+                time "State.Deserialize" (fun () -> Game.State.Deserialize(serializedState))
             match Pipe.read p with
             | ProtocolData.RequestMove {move=move} ->
-                sw.Restart()
-                let nextState = Game.applyMoves currState move.moves
-                sw.Stop()
-                eprintfn "State.ApplyMoves: %dms" sw.ElapsedMilliseconds
+                let nextState =
+                    time "State.ApplyMoves" (fun () -> Game.applyMoves currState move.moves)
                 let vIndex = currState.VIndex
-                sw.Restart()
-                let (edge, newStrategyState) = step nextState
-                sw.Stop()
-                eprintfn "Strategy[%s].Step: %dms" strategy.name sw.ElapsedMilliseconds
+                let (edge, newStrategyState) =
+                    time (sprintf "Strategy[%s].Step" strategy.name) (fun () -> step nextState)
                 let (u, v) = Edge.ends edge
                 let (eu, ev) = (vIndex.e(u), vIndex.e(v))
                 let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
                 Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
                 let newState = { nextState with StrategyState = newStrategyState }
-                sw.Restart()
-                let blob = newState.Serialize()
-                sw.Stop()
-                eprintfn "State.Serialize: %dms" sw.ElapsedMilliseconds
+                let blob = time "State.Serialize" newState.Serialize
                 go blob
             | ProtocolData.Stop {stop=stop} ->
                 (Game.applyMoves currState stop.moves, stop.scores)

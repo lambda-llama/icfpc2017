@@ -5,6 +5,8 @@ open System.Linq
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 
+open Pervasives
+
 // 0. Handshake
 
 type HandshakeOut = {
@@ -252,11 +254,8 @@ let serializeMessageOut (m : MessageOut) : JObject =
     | Move moveOut -> serializeMoveOut moveOut
 
 let serialize (m : MessageOut) : string =
-    let sw = System.Diagnostics.Stopwatch.StartNew()
-    let result = JsonConvert.SerializeObject(serializeMessageOut(m))
-    sw.Stop()
-    eprintfn "Message.Serialize: %dms" sw.ElapsedMilliseconds
-    result
+    time "Message.Serialize"
+        (fun () -> JsonConvert.SerializeObject(serializeMessageOut(m)))
 
 let serverSerialize (m : MessageIn) : string =
     JsonConvert.SerializeObject(serializeMessageIn(m))
@@ -381,8 +380,5 @@ let deserializeMessageIn (o : JObject) : MessageIn =
     | x -> raise (exn x)
 
 let deserialize (message : string) : MessageIn =
-    let sw = System.Diagnostics.Stopwatch.StartNew()
-    let result = deserializeMessageIn (JsonConvert.DeserializeObject<JObject>(message))
-    sw.Stop()
-    eprintfn "Message.Deserialize: %dms" sw.ElapsedMilliseconds
-    result
+    time "Message.Deserialize"
+        (fun () -> deserializeMessageIn (JsonConvert.DeserializeObject<JObject>(message)))
