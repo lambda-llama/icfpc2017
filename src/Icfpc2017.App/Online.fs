@@ -30,7 +30,9 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                 go blob
             | ProtocolData.Stop {stop=stop} ->
                 (Game.applyMoves currState stop.moves, stop.scores)
-            | message -> failwithf "Unexpected response: %A\n" message
+            | ProtocolData.Timeout { timeout=timeout } ->
+                eprintfn "Timed out: %d" timeout
+                go serializedState
         in go (initialState.Serialize())
 
 let checkParam (key: string) (state: Map<string, string>): unit =
