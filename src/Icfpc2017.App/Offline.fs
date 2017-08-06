@@ -19,6 +19,11 @@ let run (strategy: Strategy.T) =
       Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some chunk; futures=[||]})
     | ProtocolData.RequestMove {move=move; state=Some chunk} ->
       let state = Game.applyMoves (Game.State.Deserialize chunk) move.moves
+      let timeoutsCount = 
+        move.moves 
+        |> Array.filter (fun m -> match m with | ProtocolData.Pass pass -> pass.punter = state.Me | _ -> false)
+        |> Array.length
+      let state = { state with TimeoutsCount = timeoutsCount }
       let step = strategy.init state.Graph
       let ((eu, ev), newState) = Game.applyStrategyStep state step
       let nextMove = ProtocolData.Claim {punter=state.Me; source=eu; target=ev}

@@ -46,8 +46,7 @@ let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
                         | None -> (true, xs.[1] |> Option.get)
                 } |> Async.RunSynchronously
             stopWatch.Stop()
-            printfn "\nTime for turn: %f\n" stopWatch.Elapsed.TotalMilliseconds
             if timeout 
-            then (edge, Map.add "timeout" "true" game.StrategyState)
+            then (edge, game.StrategyState)
             else (edge, strategyState)
 }
