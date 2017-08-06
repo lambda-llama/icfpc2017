@@ -21,13 +21,6 @@ type Index<'a when 'a : comparison> = {
     member x.i (key: 'a) = Array.findIndex ((=) key) x.iToE
     member x.e (key: int) = x.iToE.[key]
 
-    static member Read (readA: BinaryReader -> 'a) r: Index<'a> =
-        failwith ":("
-
-    member index.Write (writeA: BinaryWriter -> 'a -> unit) =
-        failwith ":("
-    
-
 type VertexId = ProtocolData.VertexId
 type Color = ProtocolData.Color
 
@@ -45,31 +38,28 @@ type State = {
         use s = new MemoryStream(Convert.FromBase64String(blob))
         use r = new BinaryReader(s)
         let graph = Graph.T.Read r
-        let vIndex = Index.Read (fun r -> r.ReadUInt32()) r
+        let vIndex = r.ReadArray r.ReadUInt32 |> Index.create
         let me = r.ReadInt32()
         let numPlayers = r.ReadInt32()
         let settings = { ProtocolData.futures = r.ReadBoolean() }
 
-        let count = r.ReadInt32()
-        let xs = Array.create count ("", "")
-        for i = 0 to (count - 1) do
-            xs.[i] <- (r.ReadString(), r.ReadString())
+        let xs = r.ReadArray <| fun () -> (r.ReadString(), r.ReadString())
         let strategyState = Map.ofArray xs
         let timeoutCount = r.ReadInt32()
         let timeUsedLastMoveFraction = r.ReadDouble()
-        { Graph = graph; VIndex = vIndex; Me = me; NumPlayers = numPlayers; Settings = settings; 
+        { Graph = graph; VIndex = vIndex; Me = me; NumPlayers = numPlayers; Settings = settings;
           StrategyState = strategyState; TimeoutsCount = timeoutCount; TimeUsedLastMoveFraction = timeUsedLastMoveFraction}
 
     member state.Serialize (): string =
         use s = new MemoryStream()
         use w = new BinaryWriter(s)
         state.Graph.Write w
-        state.VIndex.Write (fun w i -> w.Write(i))
+        w.WriteArray (state.VIndex.iToE, w.Write)
         w.Write state.Me
         w.Write state.NumPlayers
         w.Write state.Settings.futures
 
-        w.Write(state.StrategyState.Count)
+        w.Write state.StrategyState.Count
         for kv in state.StrategyState do
             w.Write kv.Key
             w.Write kv.Value
