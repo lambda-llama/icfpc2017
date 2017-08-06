@@ -6,12 +6,12 @@ open System.Net
 open System.Net.Sockets
 open System.Text
 
+open Pervasives
+
 type T = private {
     InStream: Stream
     OutStream: Stream
 }
-
-let debug = ref true
 
 let connect (host: string) (port: int32): T =
     let client = new TcpClient () in

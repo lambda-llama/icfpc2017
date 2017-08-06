@@ -56,7 +56,10 @@ let initialState (setup: ProtocolData.SetupIn) (defaultStrategyState: Map<string
         |> Array.map (fun s ->
             let vid = vIndex.i(s.id)
             let isSource = Array.contains s.id setup.map.mines
-            let coords = s.coords |> Option.map (fun c -> (c.x, c.y))
+            let coords =
+                if !debug
+                then s.coords |> Option.map (fun c -> (c.x, c.y))
+                else None
             Vertex.create vid isSource coords)
     let edges =
         setup.map.rivers

@@ -88,7 +88,7 @@ module Edge =
  * The Graph.
  *)
 module Graph =
-    [<MessagePackObject>]
+    [<Struct; MessagePackObject>]
     type T = {
         [<Key(0)>]
         Vertices: Vertex.T array
