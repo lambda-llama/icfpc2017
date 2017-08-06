@@ -255,7 +255,7 @@ let serialize (m : MessageOut) : string =
     let sw = System.Diagnostics.Stopwatch.StartNew()
     let result = JsonConvert.SerializeObject(serializeMessageOut(m))
     sw.Stop()
-    printfn "Message.Serialize: %dms" sw.ElapsedMilliseconds
+    eprintfn "Message.Serialize: %dms" sw.ElapsedMilliseconds
     result
 
 let serverSerialize (m : MessageIn) : string =
@@ -384,5 +384,5 @@ let deserialize (message : string) : MessageIn =
     let sw = System.Diagnostics.Stopwatch.StartNew()
     let result = deserializeMessageIn (JsonConvert.DeserializeObject<JObject>(message))
     sw.Stop()
-    printfn "Message.Deserialize: %dms" sw.ElapsedMilliseconds
+    eprintfn "Message.Deserialize: %dms" sw.ElapsedMilliseconds
     result
