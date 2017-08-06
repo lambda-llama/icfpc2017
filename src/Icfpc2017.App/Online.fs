@@ -11,7 +11,10 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         let step = strategy.init initialState.Graph
         let rec go serializedState =
             // rend.dump currState
+            let sw = System.Diagnostics.Stopwatch.StartNew()
             let currState = Game.State.Deserialize(serializedState)
+            sw.Stop()
+            printfn "State.Deserialize: %dms" sw.ElapsedMilliseconds
             match Pipe.read p with
             | ProtocolData.RequestMove {move=move} ->
                 let nextState = Game.applyMoves currState move.moves
@@ -21,7 +24,12 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                 let (eu, ev) = (vIndex.e(u), vIndex.e(v))
                 let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
                 Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
-                go ({ nextState with StrategyState = newStrategyState }.Serialize())
+                let newState = { nextState with StrategyState = newStrategyState }
+                sw.Restart()
+                let blob = newState.Serialize()
+                sw.Stop()
+                printfn "State.Serialize: %dms" sw.ElapsedMilliseconds
+                go blob
             | ProtocolData.Stop {stop=stop} ->
                 (Game.applyMoves currState stop.moves, stop.scores)
             | message -> failwithf "Unexpected response: %A\n" message
