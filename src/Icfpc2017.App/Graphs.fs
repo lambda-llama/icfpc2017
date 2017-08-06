@@ -130,7 +130,7 @@ module Graph =
     let sinks {Sources=sources; Vertices=vs}: int seq =
         Array.toSeq vs
         |> Seq.map Vertex.id
-        |> Seq.filter (fun vid -> Array.contains vid sources)
+        |> Seq.filter (fun vid -> Array.contains vid sources |> not)
 
     let nVertices = vertices >> Array.length
     let nEdges = edges >> Array.length
