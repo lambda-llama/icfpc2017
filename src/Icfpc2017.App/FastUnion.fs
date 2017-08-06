@@ -8,6 +8,21 @@ type T = {
     Unions: Map<int, Union.T>
 }
 
+type UnionWithEdge = {
+    FastUnion: T
+    P1: int
+    P2: int
+}
+
+let createUnionWithEdge (fastUnion: T) (v1: int) (v2: int) = 
+    { FastUnion = fastUnion; P1 = fastUnion.partition.find(v1); P2 = fastUnion.partition.find(v2) }
+ 
+let getUWEParent (uwe: UnionWithEdge) (v: int) = 
+    let originalParent = uwe.FastUnion.partition.find(v)
+    if originalParent = uwe.P2
+    then uwe.P1
+    else originalParent
+
 let getComponentVerts (graph: Graph.T) (part: UnionFind.Partition) (comp: int) =
     [|0..Graph.nVertices graph|] |>
     Array.filter (fun x-> part.find(x) = comp)

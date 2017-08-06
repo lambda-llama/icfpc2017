@@ -39,8 +39,8 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
 let run mapPath =
     let map = System.IO.File.ReadAllText mapPath
     let competitors = [
-        BruteForceStrategy.bruteForce1
         GreadyStrategy.greadyStrategy
+        GreadyStrategy.greadyStrategyWithHeur
         // Strategy.randomEdge
     ]
     let (scores: int list) = simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
