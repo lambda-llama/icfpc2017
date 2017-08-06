@@ -1,5 +1,7 @@
 module Game
 
+open Newtonsoft.Json
+
 open Graphs
 
 (* Mapping from external to internal IDs. *)
@@ -25,9 +27,14 @@ type State = {
     Me: Color
     NumPlayers: int
     Settings: ProtocolData.Settings
-}
+} with
+    static member Deserialize s: State =
+        JsonConvert.DeserializeObject<State> (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
 
-let initialState (setup: ProtocolData.SetupIn ) =
+    member s.Serialize () =
+        JsonConvert.SerializeObject (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
+
+let initialState (setup: ProtocolData.SetupIn) =
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
     let vertices =
         setup.map.sites

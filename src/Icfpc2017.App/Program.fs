@@ -16,7 +16,6 @@ let handshake (p: Pipe.T): unit =
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
     fun (initialState: Game.State) ->
-        eprintf "%A\n" (initialState.Graph)
         let step = strategy.init initialState.Graph
         let rec go currState =
             rend.dump currState
@@ -26,17 +25,17 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
               let vIndex = currState.VIndex
               let (u, v) = step nextState |> Edge.ends
               let (eu, ev) = (vIndex.e(u), vIndex.e(v))
-              eprintf "uv %A euev %A\n" (u, v) (eu, ev)
               let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
               let () = Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
               go nextState
             | ProtocolData.Stop stop ->
-                    let sortedScores = stop.stop.scores |> Array.sortBy (fun x -> x.punter)
-                                                        |> Array.map (fun x -> x.score)
-                    let sortedScoresAsStr = sortedScores |> Array.map string
-                                                         |> String.concat ","
-                    eprintf """{"sortedScores": "%s" "me": "%d"}\n""" sortedScoresAsStr punter
-                    currState
+                let sortedScores =
+                    stop.stop.scores
+                    |> Array.sortBy (fun x -> x.punter)
+                    |> Array.map (fun x -> x.score)
+                    |> Array.toList
+                eprintf """{"sortedScores": "%A" "me": "%d"}\n""" sortedScores punter
+                currState
             | message -> failwithf "Unexpected response: %A\n" message
         in go initialState
 
@@ -59,12 +58,12 @@ let offline (strategy: Strategy.T) =
     do handshake p
        match Pipe.read p with
        | ProtocolData.Setup setup ->
-         let state = JsonConvert.SerializeObject (Game.initialState setup)
+         let state = (Game.initialState setup).Serialize ()
          Pipe.write p (ProtocolData.Ready {ready=setup.punter; state=Some state; futures=[||]})
        | ProtocolData.RequestMove ({state=Some state} as moveIn) ->
-         let currState = JsonConvert.DeserializeObject state :?> Game.State
+         let currState = Game.State.Deserialize state
          let nextState = Game.applyMoveIn currState moveIn
-         let (source, target) = strategy.init (currState.Graph (* TODO: precompute me*)) nextState |> Edge.ends
+         let (source, target) = strategy.init currState.Graph nextState |> Edge.ends
          (* let nextMove = ProtocolData.Claim {punter=currState.Me; source=source; target=target}
          Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (JsonConvert.SerializeObject nextState)})           *)
          ()

@@ -1,12 +1,13 @@
 namespace Icfpc2017.Tests
 
 open NUnit.Framework
+
 open ProtocolData
 
 [<TestFixture>]
 module SerializationTests =
     [<Test>]
-    let test_serialize () : unit =
+    let testSerialize () =
         Assert.That(
             serialize (Handshake { me = "llama" }),
             Is.EqualTo(@"{""me"":""llama""}"))
@@ -19,9 +20,9 @@ module SerializationTests =
         Assert.That(
             serialize (Move {move=Pass { punter = 0 }; state=None}),
             Is.EqualTo(@"{""pass"":{""punter"":0}}"))
-     
+
     [<Test>]
-    let test_deserialize () : unit =
+    let testDeserialize () =
         Assert.That(
             deserialize @"{""you"": ""llama""}",
             Is.EqualTo(
@@ -85,7 +86,7 @@ module SerializationTests =
                                 [|
                                     { punter = 0; score = 42 }
                                 |]
-                        }                    
+                        }
                     }))
         Assert.That(
             deserialize @"{""timeout"": 42}",

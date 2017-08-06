@@ -1,6 +1,11 @@
 module Graphs
 
+open System
 open System.Collections.Generic
+
+open Newtonsoft.Json
+
+open Pervasives
 
 type Color = ProtocolData.Color
 
@@ -10,6 +15,23 @@ module Vertex =
         IsSource: bool
         Coords: (float * float) option
     }
+
+    type private S = int * bool * (float * float) option
+
+    type Converter () =
+        inherit JsonConverter ()
+
+        override x.CanConvert (typ: Type) = typ = typeof<T>
+
+        override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
+            match value with
+            | :? T as e ->
+                serializer.Serialize (writer, (e.Id, e.IsSource, e.Coords))
+            | _ -> impossible
+
+        override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
+            let (id, isSource, coords) = serializer.Deserialize<S> reader
+            box {Id=id; IsSource=isSource; Coords=coords}
 
     let create id isSource coords: T = {Id=id; IsSource=isSource; Coords=coords}
 
@@ -23,20 +45,36 @@ module Edge =
         uv: int * int
     }
 
+    type private S = int * (int * int)
+
+    type Converter () =
+        inherit JsonConverter ()
+
+        override x.CanConvert (typ: Type) = typ = typeof<T>
+
+        override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
+            match value with
+            | :? T as e -> serializer.Serialize (writer, (e.id, e.uv))
+            | _ -> impossible
+
+        override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
+            let (id, uv) = serializer.Deserialize<S> reader
+            box {id=id; uv=uv}
+
     (* Enforces an invariant that the first vertex ID is smaller. *)
     let create id (u, v) = {id=id; uv=(min u v, max u v)}
 
-    let id { id=id } = id
-    let ends { uv=uv } = uv
+    let id {id=id} = id
+    let ends {uv=uv} = uv
 
-    let opposite { uv=(u, v) } w =
+    let opposite {uv=(u, v)} w =
         if w = u
         then v
         else
             assert (w = v)
             u
 
-    let contains { uv=(u, v) } w = u = w || v = w
+    let contains {uv=(u, v) } w = u = w || v = w
 
 (**
  * The Graph.
@@ -53,6 +91,28 @@ module Graph =
     let private buildAdjacentEdges vertices edges =
         vertices
         |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
+
+    type private S = Vertex.T array * int array * Edge.T array * Map<int, Color>
+
+    type Converter () =
+        inherit JsonConverter ()
+
+        override x.CanConvert (typ: Type) = typ = typeof<T>
+
+        override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
+            match value with
+            | :? T as g ->
+                let surrogate: S = (g.Vertices, g.Sources, g.Edges, g.Colors)
+                serializer.Serialize(writer, surrogate)
+            | _ -> impossible
+
+        override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
+            let (vertices, sources, edges, colors) = serializer.Deserialize<S> reader
+            box {Vertices=vertices;
+                 Sources=sources;
+                 Edges=edges;
+                 Colors=colors;
+                 AdjacentEdges=buildAdjacentEdges vertices edges}
 
     (** Simplified [create] intended ONLY for test use. *)
     let testCreate nVertices sources uvs: T =
