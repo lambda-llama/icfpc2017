@@ -24,14 +24,11 @@ let greadyStrategy: Strategy.T =
                         Map.ofSeq
 
         let getScore (edge: Edge.T) =
-            if Graph.isClaimed graph edge
-                then -1
-                else 
-                    let v1, v2 = Edge.ends edge
-                    let p1 = uf.find(v1)
-                    let p2 = uf.find(v2)
-                    if uf.find(v1) = uf.find(v2)
-                    then 0
-                    else getScore (Map.find p1 unions) (Map.find p2 unions) bfs
-        Graph.edges graph |> Array.maxBy getScore, game.StrategyState
+            let v1, v2 = Edge.ends edge
+            let p1 = uf.find(v1)
+            let p2 = uf.find(v2)
+            if uf.find(v1) = uf.find(v2)
+            then 0
+            else getScore (Map.find p1 unions) (Map.find p2 unions) bfs
+        Graph.unclaimed graph |> Seq.maxBy getScore, game.StrategyState
     )
