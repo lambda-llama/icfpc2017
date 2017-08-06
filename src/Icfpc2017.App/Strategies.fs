@@ -13,5 +13,6 @@ let all =
      (minimax.name, minimax);
      (minimax2.name, minimax2);
      // (greadyStrategy.name, greadyStrategy);
-     (mixedStrategy.name, mixedStrategy)]
+     (mixedStrategy.name, mixedStrategy)
+     (combinedForce.name, combinedForce)]
     |> Map.ofList
