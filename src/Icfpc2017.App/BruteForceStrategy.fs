@@ -44,4 +44,4 @@ let bruteForce3 =
     )
 
 let combinedForce =
-    Strategy.mixSlowFastTimeout "combinedForce" 500 bruteForce3 bruteForce1
+    Strategy.mixSlowFastTimeout "combinedForce" 700 bruteForce3 bruteForce1

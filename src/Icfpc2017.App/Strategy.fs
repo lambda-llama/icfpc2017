@@ -30,7 +30,8 @@ let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
             let (timeout, (edge, strategyState)) = 
                 async {
                     let fastTask = async { return Some(f game) }
-                    let slowTask = async { return Some(Some(s game)) }
+                    let tokenSource = new CancellationTokenSource()
+                    let slowTask = async { return Some(Some(s { game with Graph = Graph.withCancelationToken game.Graph tokenSource.Token})) }
                     let timtoutTask = async {
                         do! Async.Sleep timeoutMs
                         return Some(None)
@@ -40,6 +41,7 @@ let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
                         return (Option.get c)
                     }
                     let! xs = [ timedTask; fastTask ] |> Async.Parallel
+                    tokenSource.Cancel ()
                     return 
                         match xs.[0] with
                         | Some(r) -> (false, r)                    

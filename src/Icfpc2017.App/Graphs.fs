@@ -3,6 +3,8 @@ module Graphs
 open System
 open System.IO
 open System.Collections.Generic
+open System.Threading
+
 
 open Pervasives
 
@@ -69,6 +71,7 @@ module Graph =
         |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
 
     type T = private {
+        CancelationToken: CancellationToken option
         Vertices: Vertex.T array
         Sources: int array
         Edges: Edge.T array
@@ -82,7 +85,8 @@ module Graph =
             let colors = r.ReadMap (fun _ -> (r.ReadInt32 (), r.ReadInt32 ()))
             {Vertices=vertices; Sources=sources; Edges=edges;
              Colors=colors;
-             AdjacentEdges=buildAdjacentEdges vertices edges}
+             AdjacentEdges=buildAdjacentEdges vertices edges;
+             CancelationToken=None}
 
         member g.Write (w: BinaryWriter): unit =
             (* TODO: write only nVertices. *)
@@ -90,6 +94,8 @@ module Graph =
             w.WriteArray (g.Sources, w.Write)
             w.WriteArray (g.Edges, fun e -> e.Write w)
             w.WriteMap (g.Colors, fun k v -> w.Write k; w.Write v)
+
+    let withCancelationToken g t = { g with CancelationToken = Some t }
 
     (** Simplified [create] intended ONLY for test use. *)
     let testCreate nVertices sources uvs: T =
@@ -101,7 +107,8 @@ module Graph =
          Sources=sources;
          Edges=edges;
          Colors=Map.empty;
-         AdjacentEdges=buildAdjacentEdges vertices edges}
+         AdjacentEdges=buildAdjacentEdges vertices edges;
+         CancelationToken=None}
 
     let create vertices edges: T =
         let sources = vertices |> Array.choose (fun v ->
@@ -111,7 +118,8 @@ module Graph =
          Sources=sources;
          Edges=edges;
          Colors=Map.empty;
-         AdjacentEdges=buildAdjacentEdges vertices edges}
+         AdjacentEdges=buildAdjacentEdges vertices edges;
+         CancelationToken=None}
 
     let vertex {Vertices=vs} vid: Vertex.T = vs.[vid]
     let private vertices {Vertices=vs} = vs
@@ -155,6 +163,7 @@ module Graph =
         | None -> false
 
     let claimEdge ({Colors=cs} as g) punter eid: T =
+        let _ = g.CancelationToken |> Option.map (fun t -> t.ThrowIfCancellationRequested())
         {g with Colors=Map.add eid punter cs}
 
     let claimedBy ({Edges=es} as g) punter: Edge.T seq =
