@@ -3,7 +3,6 @@ module Graphs
 open System
 open System.Collections.Generic
 
-open MessagePack
 open Newtonsoft.Json
 
 open Pervasives

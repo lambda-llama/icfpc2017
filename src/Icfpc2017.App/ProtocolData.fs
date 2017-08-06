@@ -2,7 +2,6 @@ module ProtocolData
 
 open System.Linq
 
-open MessagePack
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 
@@ -42,9 +41,7 @@ type Map = {
     mines : VertexId array
 }
 
-[<MessagePackObject>]
 type Settings = {
-    [<Key(0)>]
     futures : bool
 }
 
