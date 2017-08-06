@@ -97,5 +97,5 @@ type Renderer = {
         let dot = sprintf "%s/%d.dot" this.directory this.count in
         let svg = sprintf "%s/_%d.svg" this.directory this.count in
         System.IO.File.WriteAllText(dot, (Graph.toDot game.Me game.Graph))
-        use p = System.Diagnostics.Process.Start("dot", sprintf "-Kfdp -n -Tsvg %s -o %s" dot svg)
+        //use p = System.Diagnostics.Process.Start("dot", sprintf "-Kfdp -n -Tsvg %s -o %s" dot svg)
         this.count <- this.count + 1
