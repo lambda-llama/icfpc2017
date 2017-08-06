@@ -20,12 +20,8 @@ let run (strategy: Strategy.T) =
     | ProtocolData.RequestMove {move=move; state=Some chunk} ->
       let state = Game.applyMoves (Game.State.Deserialize chunk) move.moves
       let step = strategy.init state.Graph
-      let (edge, newStrategyState) = step state
-      let (u, v) = Edge.ends edge
-      let vIndex = state.VIndex
-      let (eu, ev) = (vIndex.e(u), vIndex.e(v))
+      let ((eu, ev), newState) = Game.applyStrategyStep state step
       let nextMove = ProtocolData.Claim {punter=state.Me; source=eu; target=ev}
-      let newState = { state with StrategyState = newStrategyState }
       Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (newState.Serialize ())})
     | _ -> ()
     Pipe.close p

@@ -29,7 +29,7 @@ type State = {
     Settings: ProtocolData.Settings
     StrategyState: Map<string, string>
     TimeoutsCount: int
-    TimeUsedLastMovePct: float
+    TimeUsedLastMoveFraction: float
 } with
     static member Deserialize s: State =
         JsonConvert.DeserializeObject<State> (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
@@ -59,8 +59,21 @@ let initialState (setup: ProtocolData.SetupIn) =
         Settings = setup.settings
         StrategyState = Map.empty
         TimeoutsCount = 0
-        TimeUsedLastMovePct = 0.0
+        TimeUsedLastMoveFraction = 0.0
     }
+
+let private stepBudgetMs = 900.0    
+
+let applyStrategyStep s step = 
+    let stopWatch = System.Diagnostics.Stopwatch.StartNew()
+    let (edge, newStrategyState) = step s
+    stopWatch.Stop()
+    let usedFraction = float stopWatch.ElapsedMilliseconds / stepBudgetMs
+    let (u, v) = Edge.ends edge
+    let vIndex = s.VIndex
+    let (eu, ev) = (vIndex.e(u), vIndex.e(v))
+    let newState = { s with StrategyState = newStrategyState; TimeUsedLastMoveFraction = usedFraction }
+    ((eu, ev), newState)
 
 
 let applyClaim s (claim: ProtocolData.Claim) =
