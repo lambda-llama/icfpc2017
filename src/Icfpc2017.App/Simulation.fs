@@ -1,5 +1,8 @@
 module Simulation
 
+open Newtonsoft.Json
+open Newtonsoft.Json.Linq
+
 open Graphs
 
 let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Game.Color * string * (Game.State -> (Edge.T * Map<string, string>))) list) =
@@ -32,3 +35,15 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
         let reach = Traversal.shortestPaths (Graph.subgraph endGame.Graph i)
         Game.score2 endGame dists reach
     )
+
+let run mapName =
+    let map = System.IO.File.ReadAllText (sprintf "maps/%s.json" mapName)
+    let competitors = [
+        Strategy.bruteForce1
+        Strategy.bruteForce3
+        MinimaxStrategy.minimax
+        // Strategy.randomEdge
+    ]
+    let (scores: int list) = simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
+    List.zip competitors scores
+    |> List.iter (fun (c, s) ->  printf "%s %d\n" c.name s)

@@ -20,6 +20,8 @@
     <Compile Include="Strategies.fs" />
     <Compile Include="Pipe.fs" />
     <Compile Include="Simulation.fs" />
+    <Compile Include="Offline.fs" />
+    <Compile Include="Online.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
