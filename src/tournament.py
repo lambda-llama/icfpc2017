@@ -7,13 +7,8 @@ from threading import Thread
 from collections import namedtuple, defaultdict
 
 Room = namedtuple('Room', ['players_in', 'players_total', 'map_name', 'port'])
-
-re._MAXCACHE=1000
-
-
 port_pattern = re.compile("""<td>\w*</td><td>(9\d+)</td>""")
 status_pattern = re.compile("""(\d+)\/(\d+)""")
-score_pattern = re.compile("""{"sortedScores": "\[([0-9,; ]*)\]" "me": "(\d?)"}""")
 map_pattern = re.compile("""/(\w+).json""")
 
 acc_wins = defaultdict(int)
@@ -65,12 +60,6 @@ def thread_func(strategy, room):
         print_stats()
 
 if __name__ == '__main__':
-    #s = """{"sortedScores": "[9; 27]" "me": "1"}"""
-    #scores = re.search(score_pattern, s)
-    #print scores.group(1), scores.group(2)
-    #exit(0)
-
-
     import sys
     import random
     import time
