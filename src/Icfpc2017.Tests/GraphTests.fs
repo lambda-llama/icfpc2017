@@ -17,7 +17,7 @@ module TraversalTests =
     let singleEdge () =
         let edges = [|(0, 1)|] in
         let graph = Graph.testCreate 2 [|0|] edges in
-        let source = Graph.sources graph |> Array.head
+        let source = Graph.sources graph |> Seq.head
         let distances = Traversal.shortestPath graph source in
         Assert.That(distances.[1], Is.EqualTo 1)
         Assert.That(distances.[0], Is.EqualTo 0)
@@ -26,7 +26,7 @@ module TraversalTests =
     let star () =
         let edges = [|(0, 1); (0, 2); (0, 3)|] in
         let graph = Graph.testCreate 4 [|0|] edges in
-        let source = Graph.sources graph |> Array.head
+        let source = Graph.sources graph |> Seq.head
         let distances = Traversal.shortestPath graph source in
         Assert.That(distances.[1], Is.EqualTo 1)
         Assert.That(distances.[2], Is.EqualTo 1)
@@ -37,7 +37,7 @@ module TraversalTests =
     let longWorm () =
         let edges = [|(0, 1); (1, 2); (2, 3)|] in
         let graph = Graph.testCreate 4 [|3|] edges in
-        let source = Graph.sources graph |> Array.last
+        let source = Graph.sources graph |> Seq.last
         let distances = Traversal.shortestPath graph source in
         Assert.That(distances, Is.EqualTo [|3; 2; 1; 0|])
 
@@ -45,7 +45,7 @@ module TraversalTests =
     let triangle () =
         let edges = [|(0, 1); (1, 2); (2, 0)|] in
         let graph = Graph.testCreate 3 [|0|] edges in
-        let source = Graph.sources graph |> Array.head
+        let source = Graph.sources graph |> Seq.head
         let distances = Traversal.shortestPath graph source in
         Assert.That(distances.[0], Is.EqualTo 0)
         Assert.That(distances.[1], Is.EqualTo 1)

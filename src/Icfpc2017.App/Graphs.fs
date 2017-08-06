@@ -3,6 +3,7 @@ module Graphs
 open System
 open System.Collections.Generic
 
+open MessagePack
 open Newtonsoft.Json
 
 open Pervasives
@@ -10,9 +11,13 @@ open Pervasives
 type Color = ProtocolData.Color
 
 module Vertex =
-    type T = private {
+    [<Struct; MessagePackObject>]
+    type T = {
+        [<Key(0)>]
         Id: int
+        [<Key(1)>]
         IsSource: bool
+        [<Key(2)>]
         Coords: (float * float) option
     }
 
@@ -40,8 +45,11 @@ module Vertex =
     let coords {Coords=coords} = coords
 
 module Edge =
-    type T = private {
+    [<Struct; MessagePackObject>]
+    type T = {
+        [<Key(0)>]
         id: int
+        [<Key(1)>]
         uv: int * int
     }
 
@@ -80,11 +88,17 @@ module Edge =
  * The Graph.
  *)
 module Graph =
-    type T = private {
+    [<MessagePackObject>]
+    type T = {
+        [<Key(0)>]
         Vertices: Vertex.T array
+        [<Key(1)>]
         Sources: int array
+        [<Key(2)>]
         Edges: Edge.T array
+        [<Key(3)>]
         Colors: Map<int, Color>
+        [<Key(4)>]
         AdjacentEdges: Edge.T array array
     }
 
@@ -136,11 +150,15 @@ module Graph =
          Colors=Map.empty;
          AdjacentEdges=buildAdjacentEdges vertices edges}
 
-    let vertex {Vertices=vertices} vid: Vertex.T = vertices.[vid]
+    let vertex {Vertices=vs} vid: Vertex.T = vs.[vid]
+    let private vertices {Vertices=vs} = vs
+    let private edges {Edges=es} = es
 
-    let vertices {Vertices=vertices} = vertices
-    let sources {Sources=sources} = sources
-    let edges {Edges=es} = es
+    let sources {Sources=sources}: int seq = Array.toSeq sources
+    let sinks {Sources=sources; Vertices=vs}: int seq =
+        Array.toSeq vs
+        |> Seq.map Vertex.id
+        |> Seq.filter (fun vid -> Array.contains vid sources)
 
     let nVertices = vertices >> Array.length
     let nEdges = edges >> Array.length
@@ -161,7 +179,7 @@ module Graph =
             |> Array.filter (fun edge -> Map.containsKey (Edge.id edge) subColors)
         {g with Edges=subEdges; Colors=subColors; AdjacentEdges=buildAdjacentEdges (vertices g) subEdges}
 
-    let adjacentEdges {AdjacentEdges=adj} vid = adj.[vid]
+    let adjacentEdges {AdjacentEdges=adj} vid: Edge.T seq = Array.toSeq adj.[vid]
 
     let adjacent g vid =
         adjacentEdges g vid |> Seq.map (fun e -> Edge.opposite e vid)
@@ -238,7 +256,7 @@ module Traversal =
         while work.Count <> 0 do
             let current = work.Dequeue () in
             assert (distances.[current] <> -1)
-            for next in Graph.adjacentEdges graph current |> Array.filter pred |> Seq.map (fun e -> Edge.opposite e current) do
+            for next in Graph.adjacentEdges graph current |> Seq.filter pred |> Seq.map (fun e -> Edge.opposite e current) do
                 enqueueIfNeed next (distances.[current] + 1)
 
         distances
@@ -247,8 +265,5 @@ module Traversal =
 
     let shortestPaths (graph: Graph.T): Map<int, int array> =
         Graph.sources graph
-        |> Array.map (fun v -> (v, shortestPath graph v))
-        |> Map.ofArray
-// bruteForce1 2424
-// bruteForce3 3313
-// minimax 2603
+        |> Seq.map (fun v -> (v, shortestPath graph v))
+        |> Map.ofSeq

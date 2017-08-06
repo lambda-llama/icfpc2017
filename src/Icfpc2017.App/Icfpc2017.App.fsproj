@@ -28,6 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MessagePack" Version="1.4.*" />
+    <PackageReference Include="MessagePack.FSharpExtensions" Version="1.2.*" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.*" />
     <PackageReference Include="System.Console" Version="4.*" />
     <PackageReference Include="System.Net.Sockets" Version="4.*" />

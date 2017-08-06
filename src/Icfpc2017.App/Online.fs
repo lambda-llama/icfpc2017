@@ -11,6 +11,7 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
         let step = strategy.init initialState.Graph
         let rec go currState =
             rend.dump currState
+            currState.Serialize ()
             match Pipe.read p with
             | ProtocolData.RequestMove {move=move} ->
               let nextState = Game.applyMoves currState move.moves
