@@ -54,15 +54,15 @@ def get_score(port, strategy):
 
 def print_stats(strategy):
     for map_name in games:
-        print 'strategy: {}, map_name: {}, wins: {}/{}'.format(strategy, map_name, sum(wins[map_name].itervalues()), sum(games[map_name].itervalues()))
+        print 'strategy: {}, map_name: {}, wins/games: {}/{}'.format(strategy, map_name, sum(wins[map_name].itervalues()), sum(games[map_name].itervalues()))
         for enemy in games[map_name]:
-            print "\tagainst {} wins: {}/{}".format(enemy, wins[map_name][enemy], games[map_name][enemy])
+            print "\tagainst {} wins/games: {}/{}".format(enemy, wins[map_name][enemy], games[map_name][enemy])
 
 def thread_func(strategy, room):
     result = get_score(room.port, strategy)
     if result is not None:
         me, scores = result
-        for enemy in room.enemies:
+        for enemy in set(room.enemies):
             if room.map_name not in games:
                 games[room.map_name] = defaultdict(int)
             if room.map_name not in wins:
