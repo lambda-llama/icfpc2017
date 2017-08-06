@@ -1,6 +1,7 @@
 module Game
 
-open Newtonsoft.Json
+open System
+open System.IO
 
 open Graphs
 open Pervasives
@@ -15,9 +16,9 @@ type Index<'a when 'a : comparison> = {
         let eToI = iToE
                    |> Array.mapi (fun i item -> (item, i))
                    |> Map.ofArray
-        {eToI=eToI; iToE=iToE}
+        {eToI=Map.empty; iToE=iToE}
 
-    member x.i (key: 'a) = x.eToI.[key]
+    member x.i (key: 'a) = Array.findIndex ((=) key) x.iToE
     member x.e (key: int) = x.iToE.[key]
 
 type VertexId = ProtocolData.VertexId
@@ -33,11 +34,16 @@ type State = {
     TimeoutsCount: int
     TimeUsedLastMoveFraction: float
 } with
-    static member Deserialize s: State =
-        JsonConvert.DeserializeObject<State> (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
+    static member Deserialize blob: State =
+        use s = new MemoryStream(Convert.FromBase64String(blob))
+        use r = new BinaryReader(s)
+        failwith ":("
 
-    member s.Serialize () =
-        JsonConvert.SerializeObject (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
+    member s.Serialize (): string =
+        use s = new MemoryStream()
+        use w = new BinaryWriter(s)
+        w.Flush ()
+        Convert.ToBase64String(s.GetBuffer ())
 
 let initialState (setup: ProtocolData.SetupIn) (defaultStrategyState: Map<string, string>) =
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create

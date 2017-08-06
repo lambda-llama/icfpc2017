@@ -1,9 +1,8 @@
 module Graphs
 
 open System
+open System.IO
 open System.Collections.Generic
-
-open Newtonsoft.Json
 
 open Pervasives
 
@@ -11,26 +10,10 @@ type Color = ProtocolData.Color
 
 module Vertex =
     [<Struct>]
-    type T = {
+    type T = private {
         Id: int
         Coords: (float * float) option
     }
-
-    type private S = int * (float * float) option
-
-    type Converter () =
-        inherit JsonConverter ()
-
-        override x.CanConvert (typ: Type) = typ = typeof<T>
-
-        override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
-            match value with
-            | :? T as e -> serializer.Serialize (writer, (e.Id, e.Coords))
-            | _ -> impossible
-
-        override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
-            let (id, coords) = serializer.Deserialize<S> reader
-            box {Id=id; Coords=coords}
 
     let create id isSource coords: T =
         {Id=(if isSource then -id else id); Coords=coords}
@@ -41,26 +24,10 @@ module Vertex =
 
 module Edge =
     [<Struct>]
-    type T = {
+    type T = private {
         id: int
         uv: int * int
     }
-
-    type private S = int * (int * int)
-
-    type Converter () =
-        inherit JsonConverter ()
-
-        override x.CanConvert (typ: Type) = typ = typeof<T>
-
-        override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
-            match value with
-            | :? T as e -> serializer.Serialize (writer, (e.id, e.uv))
-            | _ -> impossible
-
-        override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
-            let (id, uv) = serializer.Deserialize<S> reader
-            box {id=id; uv=uv}
 
     (* Enforces an invariant that the first vertex ID is smaller. *)
     let create id (u, v) = {id=id; uv=(min u v, max u v)}
@@ -81,39 +48,21 @@ module Edge =
  * The Graph.
  *)
 module Graph =
-    type T = {
+    type T = private {
         Vertices: Vertex.T array
         Sources: int array
         Edges: Edge.T array
         Colors: Map<int, Color>
         AdjacentEdges: Edge.T array array
-    }
+    } with
+        static member Read(r: BinaryReader): T =
+            failwith ":("
+
+        member g.Write(w: BinaryWriter): unit = ()
 
     let private buildAdjacentEdges vertices edges =
         vertices
         |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
-
-    type private S = Vertex.T array * int array * Edge.T array * Map<int, Color>
-
-    type Converter () =
-        inherit JsonConverter ()
-
-        override x.CanConvert (typ: Type) = typ = typeof<T>
-
-        override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
-            match value with
-            | :? T as g ->
-                let surrogate: S = (g.Vertices, g.Sources, g.Edges, g.Colors)
-                serializer.Serialize(writer, surrogate)
-            | _ -> impossible
-
-        override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
-            let (vertices, sources, edges, colors) = serializer.Deserialize<S> reader
-            box {Vertices=vertices;
-                 Sources=sources;
-                 Edges=edges;
-                 Colors=colors;
-                 AdjacentEdges=buildAdjacentEdges vertices edges}
 
     (** Simplified [create] intended ONLY for test use. *)
     let testCreate nVertices sources uvs: T =
