@@ -1,5 +1,6 @@
 module Pervasives
 
+open System.IO
 open System.Diagnostics
 
 (* SET TO false BEFORE FINAL SUBMISSION *)
@@ -19,3 +20,15 @@ let time message f =
     let result = f ()
     eprintf "%s: %d ms\n" message timer.ElapsedMilliseconds
     result
+
+
+type BinaryReader with
+    member r.ReadArray(f: unit -> 'a): 'a array =
+        let length = r.ReadInt32 ()
+        Array.init length (fun _ -> f ())
+
+
+type BinaryWriter with
+    member w.WriteArray(xs: 'a array, f: 'a -> unit): unit =
+        w.Write (Array.length xs)
+        for x in xs do f x
