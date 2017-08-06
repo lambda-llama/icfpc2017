@@ -16,12 +16,10 @@ module Vertex =
         [<Key(0)>]
         Id: int
         [<Key(1)>]
-        IsSource: bool
-        [<Key(2)>]
         Coords: (float * float) option
     }
 
-    type private S = int * bool * (float * float) option
+    type private S = int * (float * float) option
 
     type Converter () =
         inherit JsonConverter ()
@@ -30,18 +28,18 @@ module Vertex =
 
         override x.WriteJson (writer: JsonWriter, value: obj, serializer: JsonSerializer) =
             match value with
-            | :? T as e ->
-                serializer.Serialize (writer, (e.Id, e.IsSource, e.Coords))
+            | :? T as e -> serializer.Serialize (writer, (e.Id, e.Coords))
             | _ -> impossible
 
         override x.ReadJson (reader: JsonReader, objectType: Type, existingValue: obj, serializer: JsonSerializer) =
-            let (id, isSource, coords) = serializer.Deserialize<S> reader
-            box {Id=id; IsSource=isSource; Coords=coords}
+            let (id, coords) = serializer.Deserialize<S> reader
+            box {Id=id; Coords=coords}
 
-    let create id isSource coords: T = {Id=id; IsSource=isSource; Coords=coords}
+    let create id isSource coords: T =
+        {Id=(if isSource then -id else id); Coords=coords}
 
-    let id {Id=id} = id
-    let isSource {IsSource=isSource} = isSource
+    let id {Id=id} = abs id
+    let isSource {Id=id} = id < 0
     let coords {Coords=coords} = coords
 
 module Edge =
