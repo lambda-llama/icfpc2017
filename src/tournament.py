@@ -3,78 +3,96 @@ import urllib2
 import re
 import subprocess
 from threading import Thread
+from collections import namedtuple, defaultdict
+
+Room = namedtuple('Room', ['players_in', 'players_total', 'map_name', 'port'])
 
 re._MAXCACHE=1000
 
 
 port_pattern = re.compile("""<td>\w*</td><td>(9\d+)</td>""")
-score_pattern = re.compile("{\"sortedScores\": \"([0-9,]*)\" \"me\": \"(\d?)\"}")
+status_pattern = re.compile("""(\d+)\/(\d+)""")
+score_pattern = re.compile("""{"sortedScores": "\[([0-9,; ]*)\]" "me": "(\d?)"}""")
+map_pattern = re.compile("""/(\w+).json""")
 
-def get_ports():
+acc_wins = defaultdict(int)
+acc_scores = defaultdict(int)
+acc_games = defaultdict(int)
+
+def get_rooms():
     page = urllib2.urlopen("http://punter.inf.ed.ac.uk/status.html").read()
-    ports = []
-    for k in re.findall(port_pattern, page):
-        ports.append(k)
 
-    return map(int, ports)
+    rooms = []
+
+    lines = page.split("\n")
+    for line in lines:
+        status = re.search(status_pattern, line)
+        port   = re.search(port_pattern, line)
+        map_name = re.search(map_pattern, line)
+
+        if status and port and map_name:
+            room = Room(players_in=int(status.group(1)), players_total=int(status.group(2)), map_name=map_name.group(1), port=int(port.group(1)))
+            print room
+            rooms.append(room)
+
+    return rooms
 
 def get_score(port, strategy):
     command = ["dotnet", "Icfpc2017.App/bin/Debug/netcoreapp2.0/Icfpc2017.App.dll", str(port), strategy]
     try:
         s = subprocess.check_output(command, stderr=subprocess.STDOUT)
+        print s
         scores = re.search(score_pattern, s)
         print scores.group(0), scores.group(1), scores.group(2)
-        return int(scores.group(2)), map(int, scores.group(1).split(","))
+        return int(scores.group(2)), map(int, scores.group(1).split(";"))
     except:
         return None
 
-def print_stats(acc_wins, acc_scores, acc_games):
+def print_stats():
     for strategy in acc_games:
         print "strategy: {}".format(strategy)
         print "\ttotal games: {}".format(acc_games[strategy])
-        print "\twins: {}".format(acc_wins[strategy]/acc_games[strategy])
+        print "\twins: {}".format(acc_wins[strategy])
         print "\tmean scores: {}".format(acc_scores[strategy]/acc_games[strategy])
 
+def thread_func(strategy, room):
+    result = get_score(room.port, strategy)
+    print result
+    if result is not None:
+        me, scores = result
+        print me, scores
+        acc_games[strategy] += 1
+        acc_scores[strategy] += scores[me]
+        acc_wins[strategy] += 1 if scores[me] == max(scores) else 0
+        print_stats()
+
 if __name__ == '__main__':
+    #s = """{"sortedScores": "[9; 27]" "me": "1"}"""
+    #scores = re.search(score_pattern, s)
+    #print scores.group(1), scores.group(2)
+    #exit(0)
+
+
     import sys
     import random
-    from collections import defaultdict
     import time
+    n_threads = 10
 
-    #ports = range(9016, 9021)
-    ports = range(9096, 9100)
-    strategies = ['gready']#'bruteForce1|bruteForce3|gready|minimax'.split("|")
-    #strategies = 'bruteForce1|bruteForce3|gready|minimax'.split("|")
+    strategy = 'minimax2'
 
-    acc_wins = defaultdict(int)
-    acc_scores = defaultdict(int)
-    acc_games = defaultdict(int)
+    rooms = get_rooms()
+    workers = []
 
-    n_threads = 50
-    def thread_func():
-        time.sleep(random.randint(1, 100))
-        port = random.choice(ports)
-        strategy = random.choice(strategies)
-        result = get_score(port, strategy)
-        print result
-        if result is not None:
-            me, scores = result
-            print me, scores
-            acc_games[strategy] += 1
-            acc_scores[strategy] += scores[me]
-            acc_wins[strategy] += 1 if scores[me] == max(scores) else 0
-            print_stats(acc_wins, acc_scores, acc_games)
-
-    while True:
-        workers = []
-        for i in xrange(n_threads):
-            worker = Thread(target=thread_func, args=())
+    for room in rooms:
+        if room.players_total - 1 == room.players_in and n_threads > 0:
+            worker = Thread(target=thread_func, args=(strategy, room))
             worker.daemon = True
             worker.start()
             workers.append(worker)
+            n_threads -= 1
 
-        for w in workers:
-            w.join()
+    for w in workers:
+        w.join()
 
-    print acc_wins, acc_scores, acc_games
+    #print acc_wins, acc_scores, acc_games
 
