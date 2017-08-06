@@ -9,23 +9,23 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
     let rend = Game.Renderer.create "game"
     fun (initialState: Game.State) ->
         let step = strategy.init initialState.Graph
-        let rec go currState =
-            rend.dump currState
-            time "State.Save" currState.Serialize
+        let rec go serializedState =
+            // rend.dump currState
+            let currState = Game.State.Deserialize(serializedState)
             match Pipe.read p with
             | ProtocolData.RequestMove {move=move} ->
-              let nextState = Game.applyMoves currState move.moves
-              let vIndex = currState.VIndex
-              let (edge, newStrategyState) = step nextState
-              let (u, v) = Edge.ends edge
-              let (eu, ev) = (vIndex.e(u), vIndex.e(v))
-              let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
-              Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
-              go { nextState with StrategyState = newStrategyState }
+                let nextState = Game.applyMoves currState move.moves
+                let vIndex = currState.VIndex
+                let (edge, newStrategyState) = step nextState
+                let (u, v) = Edge.ends edge
+                let (eu, ev) = (vIndex.e(u), vIndex.e(v))
+                let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
+                Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
+                go ({ nextState with StrategyState = newStrategyState }.Serialize())
             | ProtocolData.Stop {stop=stop} ->
-              (Game.applyMoves currState stop.moves, stop.scores)
+                (Game.applyMoves currState stop.moves, stop.scores)
             | message -> failwithf "Unexpected response: %A\n" message
-        in go initialState
+        in go (initialState.Serialize())
 
 let checkParam (key: string) (state: Map<string, string>): unit =
     if not (Map.containsKey key state) then
