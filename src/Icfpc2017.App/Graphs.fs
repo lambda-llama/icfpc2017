@@ -11,11 +11,9 @@ open Pervasives
 type Color = ProtocolData.Color
 
 module Vertex =
-    [<Struct; MessagePackObject>]
+    [<Struct>]
     type T = {
-        [<Key(0)>]
         Id: int
-        [<Key(1)>]
         Coords: (float * float) option
     }
 
@@ -43,11 +41,9 @@ module Vertex =
     let coords {Coords=coords} = coords
 
 module Edge =
-    [<Struct; MessagePackObject>]
+    [<Struct>]
     type T = {
-        [<Key(0)>]
         id: int
-        [<Key(1)>]
         uv: int * int
     }
 
@@ -86,17 +82,11 @@ module Edge =
  * The Graph.
  *)
 module Graph =
-    [<Struct; MessagePackObject>]
     type T = {
-        [<Key(0)>]
         Vertices: Vertex.T array
-        [<Key(1)>]
         Sources: int array
-        [<Key(2)>]
         Edges: Edge.T array
-        [<Key(3)>]
         Colors: Map<int, Color>
-        [<Key(4)>]
         AdjacentEdges: Edge.T array array
     }
 

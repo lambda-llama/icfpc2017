@@ -9,11 +9,9 @@ open Graphs
 open Pervasives
 
 (* Mapping from external to internal IDs. *)
-[<Struct; MessagePackObject>]
+[<Struct>]
 type Index<'a when 'a : comparison> = {
-    [<Key(0)>]
     eToI: Map<'a, int>
-    [<Key(1)>]
     iToE: 'a array
 } with
     static member create (iToE: 'a array): 'a Index =
@@ -28,7 +26,6 @@ type Index<'a when 'a : comparison> = {
 type VertexId = ProtocolData.VertexId
 type Color = ProtocolData.Color
 
-[<MessagePackObject(true)>]
 type State = {
     Graph: Graph.T
     VIndex: Index<VertexId>
@@ -43,11 +40,7 @@ type State = {
         JsonConvert.DeserializeObject<State> (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
 
     member s.Serialize () =
-        (* CompositeResolver.RegisterAndSetAsDefault (
-            FSharpResolver.Instance,
-            StandardResolver.Instance)
-        time "MSGPACK" (fun () -> ignore (MessagePackSerializer.Serialize (s)))
-         *)JsonConvert.SerializeObject (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
+        JsonConvert.SerializeObject (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
 
 let initialState (setup: ProtocolData.SetupIn) (defaultStrategyState: Map<string, string>) =
     let vIndex = setup.map.sites |> Array.map (fun {id=id} -> id) |> Index.create
