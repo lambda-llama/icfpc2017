@@ -2,13 +2,17 @@ module Simulation
 
 open Graphs
 
-let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Game.Color * string * (Game.State -> (Edge.T))) list) =
+let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Game.Color * string * (Game.State -> (Edge.T * Map<string, string>))) list) =
     let (me, name, step) = List.head punters
     if nStep = totalSteps then game
     else
         printf "Step %d: %s\n" nStep name
-        let (u, v) = step { game with Me = me } |> Edge.ends
-        let nextState = Game.applyClaim game { punter = me; source = uint32 u; target = uint32 v }
+        let (edge, newStrategyState) = step { game with Me = me }
+        let (u, v) = Edge.ends edge
+        let nextState =
+            Game.applyClaim
+                { game with StrategyState = newStrategyState }
+                { punter = me; source = uint32 u; target = uint32 v }
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
 
 

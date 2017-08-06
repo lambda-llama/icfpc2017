@@ -118,10 +118,12 @@ let minimax =
                 heuristic
                 (fun s _ -> getMoves (weighEdges game) s)
                 (fun p -> p = game.Me)
-        Minimax.run m game game.Me depth
-        |> Array.maxBy (fun (_, s) -> s)
-        |> fst
-        |> Option.get
+        let edge =
+            Minimax.run m game game.Me depth
+            |> Array.maxBy (fun (_, s) -> s)
+            |> fst
+            |> Option.get
+        (edge, Map.empty)
     )
 
 let minimax2 =
@@ -153,8 +155,10 @@ let minimax2 =
                 heuristic
                 (fun s p -> if p <> game.Me && p <> worstEnemy then [||] else getMoves (weighEdges game) s)
                 (fun p -> p = game.Me)
-        Minimax.run m game game.Me depth
-        |> Array.maxBy (fun (_, s) -> s)
-        |> fst
-        |> Option.get
+        let edge =
+            Minimax.run m game game.Me depth
+            |> Array.maxBy (fun (_, s) -> s)
+            |> fst
+            |> Option.get
+        (edge, Map.empty)
     )

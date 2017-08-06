@@ -23,11 +23,12 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
             | ProtocolData.RequestMove {move=move} ->
               let nextState = Game.applyMoves currState move.moves
               let vIndex = currState.VIndex
-              let (u, v) = step nextState |> Edge.ends
+              let (edge, newStrategyState) = step nextState
+              let (u, v) = Edge.ends edge
               let (eu, ev) = (vIndex.e(u), vIndex.e(v))
               let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
               Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
-              go nextState
+              go { nextState with StrategyState = newStrategyState }
             | ProtocolData.Stop {stop=stop} ->
               (Game.applyMoves currState stop.moves, stop.scores)
             | message -> failwithf "Unexpected response: %A\n" message
@@ -63,11 +64,13 @@ let offline (strategy: Strategy.T) =
     | ProtocolData.RequestMove {move=move; state=Some chunk} ->
       let state = Game.applyMoves (Game.State.Deserialize chunk) move.moves
       let step = strategy.init state.Graph
-      let (u, v) = step state |> Edge.ends
+      let (edge, newStrategyState) = step state
+      let (u, v) = Edge.ends edge
       let vIndex = state.VIndex
       let (eu, ev) = (vIndex.e(u), vIndex.e(v))
       let nextMove = ProtocolData.Claim {punter=state.Me; source=eu; target=ev}
-      Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (state.Serialize ())})
+      let newState = { state with StrategyState = newStrategyState }
+      Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (newState.Serialize ())})
     | _ -> ()
     Pipe.close p
 

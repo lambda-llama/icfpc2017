@@ -7,10 +7,10 @@ open System.Threading.Tasks
 
 type T = {
     name: string
-    init: Graph.T -> Game.State -> Edge.T
+    init: Graph.T -> Game.State -> Edge.T * Map<string, string>
 }
 
-let stateless name f = { name = name; init = fun _ -> f }
+let stateless name step = { name = name; init = fun _ -> step }
 let withSetup name setup step = { name = name; init = fun initialGraph -> let data = setup initialGraph in fun game -> step data game }
 
 let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
@@ -46,7 +46,7 @@ let private maxByWeight (graph: Graph.T) (weight: Edge.T -> 'a when 'a: comparis
 
 let randomEdge =
     stateless "randomEdge" (fun game ->
-        Graph.unclaimed game.Graph |> Seq.head
+        (Graph.unclaimed game.Graph |> Seq.head, Map.empty)
     )
 
 let growFromMines =
@@ -72,20 +72,22 @@ let growFromMines =
             else 0
         in
 
-        if Array.exists isOurEdge (Graph.edges graph)
-        then maxByWeight graph weight
-        else
-            let mine =
-                distances |> Map.toSeq
-                |> Seq.map (fun (mine, ds) ->
-                    (mine, Array.fold (fun acc x -> acc + x*x) 0 ds))
-                |> Seq.maxBy (fun (_, distance) -> distance)
-                |> fst
-            in
+        let edge =
+            if Array.exists isOurEdge (Graph.edges graph)
+            then maxByWeight graph weight
+            else
+                let mine =
+                    distances |> Map.toSeq
+                    |> Seq.map (fun (mine, ds) ->
+                        (mine, Array.fold (fun acc x -> acc + x*x) 0 ds))
+                    |> Seq.maxBy (fun (_, distance) -> distance)
+                    |> fst
+                in
 
-            Graph.adjacentEdges graph mine
-            (* TODO: pick the most remote one. *)
-            |> Seq.find (fun _ -> true)
+                Graph.adjacentEdges graph mine
+                (* TODO: pick the most remote one. *)
+                |> Seq.find (fun _ -> true)
+        (edge, Map.empty)
     )
 
 let bruteForce1 =
@@ -97,7 +99,7 @@ let bruteForce1 =
             let reach = Traversal.shortestPaths (Graph.subgraph graph me)
             Game.score2 {game with Game.Graph = graph } dists reach
         in
-        maxByWeight graph weight
+        (maxByWeight graph weight, Map.empty)
     )
 
 let makeNotEmpty xs = Seq.append xs (Seq.ofList [0])
@@ -126,7 +128,7 @@ let bruteForce3 =
             |> Seq.max
             |> (fun score -> (score, tieScore))
         in
-        maxByWeight graph weight
+        (maxByWeight graph weight, Map.empty)
     )
 
 let combinedForce = 
