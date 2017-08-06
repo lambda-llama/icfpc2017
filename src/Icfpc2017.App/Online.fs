@@ -6,20 +6,31 @@ open Graphs
 open Pervasives
 
 let play (p: Pipe.T) punter (strategy: Strategy.T) =
+    let sw = System.Diagnostics.Stopwatch.StartNew()
     let rend = Game.Renderer.create "game"
+    sw.Stop()
+    printfn "Game.Create: %dms" sw.ElapsedMilliseconds
     fun (initialState: Game.State) ->
+        sw.Restart()
         let step = strategy.init initialState.Graph
+        sw.Stop()
+        printfn "Strategy.Init: %dms" sw.ElapsedMilliseconds
         let rec go serializedState =
-            // rend.dump currState
-            let sw = System.Diagnostics.Stopwatch.StartNew()
+            sw.Restart()
             let currState = Game.State.Deserialize(serializedState)
             sw.Stop()
             printfn "State.Deserialize: %dms" sw.ElapsedMilliseconds
             match Pipe.read p with
             | ProtocolData.RequestMove {move=move} ->
+                sw.Restart()
                 let nextState = Game.applyMoves currState move.moves
+                sw.Stop()
+                printfn "State.ApplyMoves: %dms" sw.ElapsedMilliseconds
                 let vIndex = currState.VIndex
+                sw.Restart()
                 let (edge, newStrategyState) = step nextState
+                sw.Stop()
+                printfn "Strategy[%s].Step: %dms" strategy.name sw.ElapsedMilliseconds
                 let (u, v) = Edge.ends edge
                 let (eu, ev) = (vIndex.e(u), vIndex.e(v))
                 let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}

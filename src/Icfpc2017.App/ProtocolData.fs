@@ -252,7 +252,11 @@ let serializeMessageOut (m : MessageOut) : JObject =
     | Move moveOut -> serializeMoveOut moveOut
 
 let serialize (m : MessageOut) : string =
-    JsonConvert.SerializeObject(serializeMessageOut(m))
+    let sw = System.Diagnostics.Stopwatch.StartNew()
+    let result = JsonConvert.SerializeObject(serializeMessageOut(m))
+    sw.Stop()
+    printfn "Message.Serialize: %dms" sw.ElapsedMilliseconds
+    result
 
 let serverSerialize (m : MessageIn) : string =
     JsonConvert.SerializeObject(serializeMessageIn(m))
@@ -377,4 +381,8 @@ let deserializeMessageIn (o : JObject) : MessageIn =
     | x -> raise (exn x)
 
 let deserialize (message : string) : MessageIn =
-    deserializeMessageIn (JsonConvert.DeserializeObject<JObject>(message))
+    let sw = System.Diagnostics.Stopwatch.StartNew()
+    let result = deserializeMessageIn (JsonConvert.DeserializeObject<JObject>(message))
+    sw.Stop()
+    printfn "Message.Deserialize: %dms" sw.ElapsedMilliseconds
+    result
