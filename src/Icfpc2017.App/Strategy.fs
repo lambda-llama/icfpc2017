@@ -20,7 +20,7 @@ let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
         let f = fast.init initialGraph
         fun game ->
             let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-            let result = 
+            let (timeout, (edge, strategyState)) = 
                 async {
                     let fastTask = async { return Some(f game) }
                     let slowTask = async { return Some(Some(s game)) }
@@ -33,10 +33,14 @@ let mixSlowFastTimeout name (timeoutMs: int) (slow: T) (fast: T) = {
                         return (Option.get c)
                     }
                     let! xs = [ timedTask; fastTask ] |> Async.Parallel
-                    printf "%s\n" (if Option.isSome xs.[0] then "SLOW" else "FAST")
-                    return (Array.choose id xs).[0]
+                    return 
+                        match xs.[0] with
+                        | Some(r) -> (false, r)                    
+                        | None -> (true, xs.[1] |> Option.get)
                 } |> Async.RunSynchronously
             stopWatch.Stop()
             printfn "\nTime for turn: %f\n" stopWatch.Elapsed.TotalMilliseconds
-            result
+            if timeout 
+            then (edge, Map.add "timeout" "ture" game.StrategyState)
+            else (edge, strategyState)
 }
