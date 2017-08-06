@@ -75,30 +75,21 @@ module Graph =
         Colors: Map<int, Color>
         AdjacentEdges: Edge.T array array
     } with
-        static member Read(r: BinaryReader): T =
-            let vertices = r.ReadArray (fun () -> Vertex.T.Read r)
-            let sources = r.ReadArray r.ReadInt32
-            let edges = r.ReadArray (fun () -> Edge.T.Read r)
-
-            let s = Seq.init (r.ReadInt32 ()) (fun _ ->
-                let eid = r.ReadInt32 ()
-                let color = r.ReadInt32 ()
-                (eid, color))
-
+        static member Read (r: BinaryReader): T =
+            let vertices = r.ReadArray (fun _ -> Vertex.T.Read r)
+            let sources = r.ReadArray (fun _ -> r.ReadInt32 ())
+            let edges = r.ReadArray (fun _ -> Edge.T.Read r)
+            let colors = r.ReadMap (fun _ -> (r.ReadInt32 (), r.ReadInt32 ()))
             {Vertices=vertices; Sources=sources; Edges=edges;
-             Colors=Map.ofSeq s;
+             Colors=colors;
              AdjacentEdges=buildAdjacentEdges vertices edges}
 
-        member g.Write(w: BinaryWriter): unit =
+        member g.Write (w: BinaryWriter): unit =
             (* TODO: write only nVertices. *)
             w.WriteArray (g.Vertices, fun v -> v.Write w)
             w.WriteArray (g.Sources, w.Write)
             w.WriteArray (g.Edges, fun e -> e.Write w)
-
-            w.Write g.Colors.Count
-            for kv in g.Colors do
-                w.Write kv.Key
-                w.Write kv.Value
+            w.WriteMap (g.Colors, fun k v -> w.Write k; w.Write v)
 
     (** Simplified [create] intended ONLY for test use. *)
     let testCreate nVertices sources uvs: T =

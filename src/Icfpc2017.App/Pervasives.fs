@@ -23,12 +23,20 @@ let time message f =
 
 
 type BinaryReader with
-    member inline r.ReadArray(f: unit -> 'a): 'a array =
+    member inline r.ReadArray(f: int -> 'a): 'a array =
         let length = r.ReadInt32 ()
-        Array.init length (fun _ -> f ())
+        Array.init length f
+
+    member inline r.ReadMap (f: int -> 'a * 'b): Map<'a, 'b> =
+        let length = r.ReadInt32 ()
+        Seq.init length f |> Map.ofSeq
 
 
 type BinaryWriter with
     member inline w.WriteArray(xs: 'a array, f: 'a -> unit): unit =
-        w.Write (Array.length xs)
+        w.Write xs.Length
         for x in xs do f x
+
+    member inline w.WriteMap(m: Map<'a, 'b>, f: 'a -> 'b -> unit): unit =
+        w.Write m.Count
+        for kv in m do f kv.Key kv.Value

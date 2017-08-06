@@ -38,15 +38,14 @@ type State = {
         use s = new MemoryStream(Convert.FromBase64String(blob))
         use r = new BinaryReader(s)
         let graph = Graph.T.Read r
-        let vIndex = r.ReadArray r.ReadUInt32 |> Index.create
-        let me = r.ReadInt32()
-        let numPlayers = r.ReadInt32()
-        let settings = { ProtocolData.futures = r.ReadBoolean() }
+        let vIndex = r.ReadArray (fun _ -> r.ReadUInt32 ()) |> Index.create
+        let me = r.ReadInt32 ()
+        let numPlayers = r.ReadInt32 ()
+        let settings = { ProtocolData.futures = r.ReadBoolean () }
 
-        let xs = r.ReadArray <| fun () -> (r.ReadString(), r.ReadString())
-        let strategyState = Map.ofArray xs
-        let timeoutCount = r.ReadInt32()
-        let timeUsedLastMoveFraction = r.ReadDouble()
+        let strategyState = r.ReadMap (fun _ -> (r.ReadString (), r.ReadString ()))
+        let timeoutCount = r.ReadInt32 ()
+        let timeUsedLastMoveFraction = r.ReadDouble ()
         { Graph = graph; VIndex = vIndex; Me = me; NumPlayers = numPlayers; Settings = settings;
           StrategyState = strategyState; TimeoutsCount = timeoutCount; TimeUsedLastMoveFraction = timeUsedLastMoveFraction}
 
@@ -58,12 +57,7 @@ type State = {
         w.Write state.Me
         w.Write state.NumPlayers
         w.Write state.Settings.futures
-
-        w.Write state.StrategyState.Count
-        for kv in state.StrategyState do
-            w.Write kv.Key
-            w.Write kv.Value
-
+        w.WriteMap (state.StrategyState, (fun k v -> w.Write k; w.Write v))
         w.Write state.TimeoutsCount
         w.Write state.TimeUsedLastMoveFraction
 
