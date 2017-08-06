@@ -23,12 +23,12 @@ let time message f =
 
 
 type BinaryReader with
-    member r.ReadArray(f: unit -> 'a): 'a array =
+    member inline r.ReadArray(f: unit -> 'a): 'a array =
         let length = r.ReadInt32 ()
         Array.init length (fun _ -> f ())
 
 
 type BinaryWriter with
-    member w.WriteArray(xs: 'a array, f: 'a -> unit): unit =
+    member inline w.WriteArray(xs: 'a array, f: 'a -> unit): unit =
         w.Write (Array.length xs)
         for x in xs do f x

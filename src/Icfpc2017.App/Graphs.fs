@@ -13,7 +13,12 @@ module Vertex =
     type T = private {
         Id: int
         Coords: (float * float) option
-    }
+    } with
+        static member Read(r: BinaryReader): T =
+            {Id=r.ReadInt32 (); Coords=None}
+
+        member v.Write(w: BinaryWriter): unit =
+            w.Write v.Id
 
     let create id isSource coords: T =
         {Id=(if isSource then -id else id); Coords=coords}
@@ -25,29 +30,44 @@ module Vertex =
 module Edge =
     [<Struct>]
     type T = private {
-        id: int
-        uv: int * int
-    }
+        Id: int
+        U: int
+        V: int
+    } with
+        static member Read(r: BinaryReader): T =
+            let id = r.ReadInt32 ()
+            let u = r.ReadInt32 ()
+            let v = r.ReadInt32 ()
+            {Id=id; U=u; V=v}
+
+        member e.Write(w: BinaryWriter): unit =
+            w.Write e.Id
+            w.Write e.U
+            w.Write e.V
 
     (* Enforces an invariant that the first vertex ID is smaller. *)
-    let create id (u, v) = {id=id; uv=(min u v, max u v)}
+    let create id (u, v) = {Id=id; U=min u v; V=max u v}
 
-    let id {id=id} = id
-    let ends {uv=uv} = uv
+    let id {Id=id} = id
+    let ends {U=u; V=v} = (u, v)
 
-    let opposite {uv=(u, v)} w =
+    let opposite {U=u; V=v} w =
         if w = u
         then v
         else
             assert (w = v)
             u
 
-    let contains {uv=(u, v) } w = u = w || v = w
+    let contains {U=u; V=v} w = u = w || v = w
 
 (**
  * The Graph.
  *)
 module Graph =
+    let private buildAdjacentEdges vertices edges =
+        vertices
+        |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
+
     type T = private {
         Vertices: Vertex.T array
         Sources: int array
@@ -56,13 +76,29 @@ module Graph =
         AdjacentEdges: Edge.T array array
     } with
         static member Read(r: BinaryReader): T =
-            failwith ":("
+            let vertices = r.ReadArray (fun () -> Vertex.T.Read r)
+            let sources = r.ReadArray r.ReadInt32
+            let edges = r.ReadArray (fun () -> Edge.T.Read r)
 
-        member g.Write(w: BinaryWriter): unit = ()
+            let s = Seq.init (r.ReadInt32 ()) (fun _ ->
+                let eid = r.ReadInt32 ()
+                let color = r.ReadInt32 ()
+                (eid, color))
 
-    let private buildAdjacentEdges vertices edges =
-        vertices
-        |> Array.map (fun v -> edges |> Array.filter (fun e -> Edge.contains e (Vertex.id v)))
+            {Vertices=vertices; Sources=sources; Edges=edges;
+             Colors=Map.ofSeq s;
+             AdjacentEdges=buildAdjacentEdges vertices edges}
+
+        member g.Write(w: BinaryWriter): unit =
+            (* TODO: write only nVertices. *)
+            w.WriteArray (g.Vertices, fun v -> v.Write w)
+            w.WriteArray (g.Sources, w.Write)
+            w.WriteArray (g.Edges, fun e -> e.Write w)
+
+            w.Write g.Colors.Count
+            for kv in g.Colors do
+                w.Write kv.Key
+                w.Write kv.Value
 
     (** Simplified [create] intended ONLY for test use. *)
     let testCreate nVertices sources uvs: T =
