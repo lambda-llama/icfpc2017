@@ -17,7 +17,6 @@ score_pattern = re.compile("""{"sortedScores": "\[([0-9,; ]*)\]" "me": "(\d?)"}"
 map_pattern = re.compile("""/(\w+).json""")
 
 acc_wins = defaultdict(int)
-acc_scores = defaultdict(int)
 acc_games = defaultdict(int)
 
 def get_rooms():
@@ -39,7 +38,7 @@ def get_rooms():
     return rooms
 
 def get_score(port, strategy):
-    command = ["dotnet", "Icfpc2017.App/bin/Debug/netcoreapp2.0/Icfpc2017.App.dll", str(port), strategy]
+    command = ["dotnet", "Icfpc2017.App/bin/Release/netcoreapp2.0/Icfpc2017.App.dll", str(port), strategy]
     try:
         s = subprocess.check_output(command, stderr=subprocess.STDOUT)
         print s
@@ -54,7 +53,6 @@ def print_stats():
         print "strategy: {}".format(strategy)
         print "\ttotal games: {}".format(acc_games[strategy])
         print "\twins: {}".format(acc_wins[strategy])
-        print "\tmean scores: {}".format(acc_scores[strategy]/acc_games[strategy])
 
 def thread_func(strategy, room):
     result = get_score(room.port, strategy)
@@ -63,7 +61,6 @@ def thread_func(strategy, room):
         me, scores = result
         print me, scores
         acc_games[strategy] += 1
-        acc_scores[strategy] += scores[me]
         acc_wins[strategy] += 1 if scores[me] == max(scores) else 0
         print_stats()
 
@@ -94,5 +91,3 @@ if __name__ == '__main__':
 
     for w in workers:
         w.join()
-
-    #print acc_wins, acc_scores, acc_games
