@@ -109,3 +109,18 @@ module SerializationTests =
                 Timeout {
                     timeout = 42
                 }))
+        Assert.That(
+            deserialize @"{""move"":{""moves"":[{""pass"":{""punter"":0}},{""claim"":{""punter"":0,""source"":54,""target"":11}},{""splurge"":{""punter"":11,""route"":[69,72,67]}}]}}",
+            Is.EqualTo(
+                RequestMove {
+                    move =
+                        {
+                            moves =
+                                [|
+                                    Pass { punter = 0 }
+                                    Claim { punter = 0; source = 54u; target = 11u }
+                                    Splurge { punter = 11; route = [| 69u; 72u; 67u; |] }
+                                |]
+                        }
+                    state = None
+                }))

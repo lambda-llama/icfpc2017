@@ -353,7 +353,7 @@ let deserializeMove (o : JObject) : Move =
     | "splurge" ->
         Splurge {
             punter = v.["punter"].ToObject<Color>()
-            route = convertArray o.["route"] id
+            route = convertArray v.["route"] (fun (i: JValue) -> i.ToObject<VertexId>())
         }
     | x -> raise (exn x)
 
