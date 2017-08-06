@@ -6,6 +6,9 @@ open MinimaxStrategy
 open GreadyStrategy
 open MixedStrategy
 
+let greadyBrute =
+    Strategy.mixSlowFastTimeout "greadyBrute" 300 bruteForce3 greadyStrategy
+
 let all =
     [(growFromMines.name, growFromMines);
      (bruteForce1.name, bruteForce1);
@@ -15,5 +18,6 @@ let all =
      (greadyStrategy.name, greadyStrategy);
      (greadyStrategyWithHeur.name, greadyStrategyWithHeur);
      (mixedStrategy.name, mixedStrategy)
-     (combinedForce.name, combinedForce)]
+     (combinedForce.name, combinedForce)
+     (greadyBrute.name, greadyBrute)]
     |> Map.ofList
