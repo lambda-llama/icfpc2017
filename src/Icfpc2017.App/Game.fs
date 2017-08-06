@@ -27,6 +27,9 @@ type State = {
     Me: Color
     NumPlayers: int
     Settings: ProtocolData.Settings
+    StrategyState: Map<string, string>
+    TimeoutsCount: int
+    TimeUsedLastMovePct: float
 } with
     static member Deserialize s: State =
         JsonConvert.DeserializeObject<State> (s, Graph.Converter (), Vertex.Converter (), Edge.Converter ())
@@ -54,6 +57,9 @@ let initialState (setup: ProtocolData.SetupIn) =
         Me = setup.punter
         NumPlayers = setup.punters
         Settings = setup.settings
+        StrategyState = Map.empty
+        TimeoutsCount = 0
+        TimeUsedLastMovePct = 0.0
     }
 
 
