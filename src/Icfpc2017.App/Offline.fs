@@ -26,8 +26,11 @@ let run (strategy: Strategy.T) =
         |> Array.length
       let state = { state with TimeoutsCount = timeoutsCount }
       let step = strategy.init state.Graph
-      let ((eu, ev), newState) = Game.applyStrategyStep state step
-      let nextMove = ProtocolData.Claim {punter=state.Me; source=eu; target=ev}
+      let ((eu, ev), isOption, newState) = Game.applyStrategyStep state step
+      let nextMove =
+        if isOption
+        then ProtocolData.Option {punter=state.Me; source=eu; target=ev}
+        else ProtocolData.Claim {punter=state.Me; source=eu; target=ev}
       Pipe.write p (ProtocolData.Move {move=nextMove; state=Some (time "State.Save" newState.Serialize)})
     | _ -> ()
     Pipe.close p

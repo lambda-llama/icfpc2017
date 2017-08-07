@@ -41,7 +41,7 @@ module SerializationTests =
                             rivers = [| { source = 0u; target = 1u } |]
                             mines = [| 0u; 1u |]
                         }
-                    settings = { futures = true; splurges = false }
+                    settings = { futures = true; splurges = false; options = false }
                 }))
         Assert.That(
             deserialize @"{""punter"": 0, ""punters"": 1, map: {""sites"": [{""id"": 0}, {""id"": 1, ""x"": -1.5, ""y"": 0.5}], ""rivers"": [{""source"": 0, ""target"": 1}], ""mines"": [0, 1]}, ""settings"": {""splurges"": true}}",
@@ -55,7 +55,7 @@ module SerializationTests =
                             rivers = [| { source = 0u; target = 1u } |]
                             mines = [| 0u; 1u |]
                         }
-                    settings = { futures = false; splurges = true }
+                    settings = { futures = false; splurges = true; options = false }
                 }))
 
         Assert.That(
@@ -70,7 +70,7 @@ module SerializationTests =
                             rivers = [||]
                             mines = [||]
                         }
-                    settings = { futures = false; splurges = false }
+                    settings = { futures = false; splurges = false; options = false }
                 }))
         Assert.That(
             deserialize @"{""move"": {""moves"":[{""claim"":{""punter"":0,""source"":0,""target"":0}},{""pass"":{""punter"":0}}]}}",

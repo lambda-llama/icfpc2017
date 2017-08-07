@@ -22,9 +22,16 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                 let vIndex = currState.VIndex
                 let (edge, newStrategyState) =
                     time (sprintf "Strategy[%s].Step" strategy.name) (fun () -> step nextState)
+                let isOption =
+                    match Graph.edgeColor nextState.Graph edge with
+                    | Some c -> c <> nextState.Me
+                    | None -> false
                 let (u, v) = Edge.ends edge
                 let (eu, ev) = (vIndex.e(u), vIndex.e(v))
-                let nextMove = ProtocolData.Claim {punter=punter; source=eu; target=ev}
+                let nextMove =
+                    if isOption
+                    then ProtocolData.Option {punter=nextState.Me; source=eu; target=ev}
+                    else ProtocolData.Claim {punter=nextState.Me; source=eu; target=ev}
                 Pipe.write p (ProtocolData.Move {move=nextMove; state=None})
                 let newState = { nextState with StrategyState = newStrategyState; TimeoutsCount = 0 }
                 let blob = time "State.Serialize" newState.Serialize

@@ -46,6 +46,7 @@ type Map = {
 type Settings = {
     futures : bool
     splurges : bool
+    options : bool
 }
 
 type SetupIn = {
@@ -82,6 +83,7 @@ type Move =
     | Claim of claim : Claim
     | Pass of pass : Pass
     | Splurge of splurge : Splurge
+    | Option of claim : Claim
 
 type Moves = {
     moves : Move array
@@ -216,7 +218,7 @@ let serializeSplurge (s : Splurge) : JObject =
 
 let serializeMove (m : Move) : JObject =
     match m with
-    | Claim claim -> serializeClaim claim
+    | Claim claim | Option claim -> serializeClaim claim
     | Pass pass -> serializePass pass
     | Splurge splurge -> serializeSplurge splurge
 
@@ -317,13 +319,15 @@ let deserializeMap (o : JObject) : Map =
 
 let deserializeSettings (o : JObject) =
     if isNull o
-    then {futures=false; splurges=false}
+    then {futures=false; splurges=false; options=false}
     else
         let futures =
             not (isNull o.["futures"]) && o.["futures"].ToObject<bool>()
         let splurges =
             not (isNull o.["splurges"]) && o.["splurges"].ToObject<bool>()
-        {futures=futures; splurges=splurges}
+        let options =
+            not (isNull o.["splurges"]) && o.["splurges"].ToObject<bool>()
+        {futures=futures; splurges=splurges; options=options}
 
 let deserializeState (o : JObject) =
     if isNull o.["state"] then None else Some (o.["state"].ToObject<string> ())
@@ -354,6 +358,12 @@ let deserializeMove (o : JObject) : Move =
         Splurge {
             punter = v.["punter"].ToObject<Color>()
             route = convertArray v.["route"] (fun (i: JValue) -> i.ToObject<VertexId>())
+        }
+    | "option" ->
+        Option {
+            punter = v.["punter"].ToObject<Color>()
+            source = v.["source"].ToObject<VertexId>()
+            target = v.["target"].ToObject<VertexId>()
         }
     | x -> raise (exn x)
 

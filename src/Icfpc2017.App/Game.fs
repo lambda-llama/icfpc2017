@@ -31,6 +31,7 @@ type State = {
     NumPlayers: int
     Futures: bool
     Splurges: bool
+    Options: bool
     StrategyState: Map<string, string>
     TimeoutsCount: int
     TimeUsedLastMoveFraction: float
@@ -44,11 +45,12 @@ type State = {
         let numPlayers = r.ReadInt32 ()
         let futures = r.ReadBoolean ()
         let splurges = r.ReadBoolean ()
+        let options = r.ReadBoolean ()
         let strategyState = r.ReadMap (fun _ -> (r.ReadString (), r.ReadString ()))
         let timeoutCount = r.ReadInt32 ()
         let timeUsedLastMoveFraction = r.ReadDouble ()
         {Graph=graph; VIndex=vIndex; Me=me; NumPlayers=numPlayers;
-         Futures=futures; Splurges=splurges;
+         Futures=futures; Splurges=splurges; Options=options;
          StrategyState=strategyState; TimeoutsCount=timeoutCount;
          TimeUsedLastMoveFraction=timeUsedLastMoveFraction}
 
@@ -61,6 +63,7 @@ type State = {
         w.Write state.NumPlayers
         w.Write state.Futures
         w.Write state.Splurges
+        w.Write state.Options
         w.WriteMap (state.StrategyState, (fun k v -> w.Write k; w.Write v))
         w.Write state.TimeoutsCount
         w.Write state.TimeUsedLastMoveFraction
@@ -86,34 +89,39 @@ let initialState (setup: ProtocolData.SetupIn) (defaultStrategyState: Map<string
             let uv = (vIndex.i(r.source), vIndex.i(r.target))
             Edge.create i uv)
     {
-        Graph = Graph.create vertices edges
+        Graph = Graph.create vertices edges setup.settings.options
         VIndex = vIndex
         Me = setup.punter
         NumPlayers = setup.punters
         Futures = setup.settings.futures
         Splurges = setup.settings.splurges
+        Options = setup.settings.options
         StrategyState = defaultStrategyState
         TimeoutsCount = 0
         TimeUsedLastMoveFraction = 0.0
     }
 
 let private stepBudgetMs = 900.0
-
 let applyStrategyStep s step =
     let stopWatch = System.Diagnostics.Stopwatch.StartNew()
     let (edge, newStrategyState) = step s
+    let isOption =
+        match Graph.edgeColor s.Graph edge with
+        | Some c -> c <> s.Me
+        | None -> false
+    eprintf "OPTION: %A\n" isOption
     stopWatch.Stop()
     let usedFraction = float stopWatch.ElapsedMilliseconds / stepBudgetMs
     let (u, v) = Edge.ends edge
     let vIndex = s.VIndex
     let (eu, ev) = (vIndex.e(u), vIndex.e(v))
     let newState = { s with StrategyState = newStrategyState; TimeUsedLastMoveFraction = usedFraction }
-    ((eu, ev), newState)
+    ((eu, ev), isOption, newState)
 
 let applyClaim s (claim: ProtocolData.Claim) =
     let eid = (s.VIndex.i(claim.source), s.VIndex.i(claim.target))
               |> Graph.edgeId s.Graph
-    {s with Graph = Graph.claimEdge s.Graph claim.punter eid}
+    {s with Graph=Graph.claimOptionEdge s.Graph claim.punter s.Me eid}
 
 let applySplurge s (splurge: ProtocolData.Splurge) =
     Array.toList splurge.route |> pairwise |> List.fold (fun s (eu, ev) ->
@@ -121,7 +129,8 @@ let applySplurge s (splurge: ProtocolData.Splurge) =
 
 let applyMoves = Array.fold (fun s move ->
     match move with
-    | ProtocolData.Claim claim -> applyClaim s claim
+    | ProtocolData.Claim claim
+    | ProtocolData.Option claim -> applyClaim s claim
     | ProtocolData.Splurge splurge -> applySplurge s splurge
     | ProtocolData.Pass _ -> s)
 

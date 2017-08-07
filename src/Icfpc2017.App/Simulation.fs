@@ -10,7 +10,7 @@ let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Gam
     if nStep = totalSteps then game
     else
         printf "Step %d: %s\n" nStep name
-        let ((eu, ev), nextState) = Game.applyStrategyStep {game with Me=me} step
+        let ((eu, ev), isOption, nextState) = Game.applyStrategyStep {game with Me=me} step
         let nextState =
             Game.applyClaim nextState {punter=me; source=eu; target=ev}
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
@@ -21,7 +21,7 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
         { punter = -1;
           punters = List.length strats;
           map = map;
-          settings = { futures = false; splurges = false } }
+          settings = { futures = false; splurges = false; options = true } }
     let state = Game.initialState setup Map.empty // TODO: pass the default state
     do
         let g = state.Graph

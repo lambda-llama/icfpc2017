@@ -78,6 +78,8 @@ module Graph =
         Edges: Edge.T array
         EdgeFilter: Edge.T -> bool
         Colors: Map<int, Color>
+        OptionsUsed: Set<int>
+        OptionsLeft: int
         AdjacentEdges: Edge.T array array
     } with
         static member Read (r: BinaryReader): T =
@@ -85,8 +87,11 @@ module Graph =
             let sources = r.ReadArray (fun _ -> r.ReadInt32 ())
             let edges = r.ReadArray (fun _ -> Edge.T.Read r)
             let colors = r.ReadMap (fun _ -> (r.ReadInt32 (), r.ReadInt32 ()))
+            let optionsLeft = r.ReadInt32()
+            let optionsUsed = r.ReadArray (fun _ -> r.ReadInt32 ()) |> Set.ofArray
             {Vertices=vertices; Sources=sources; Edges=edges;
              EdgeFilter=defaultFilter; Colors=colors;
+             OptionsUsed=optionsUsed; OptionsLeft=optionsLeft;
              AdjacentEdges=buildAdjacentEdges vertices edges;
              CancelationToken=None}
 
@@ -96,6 +101,8 @@ module Graph =
             w.WriteArray (g.Sources, w.Write)
             w.WriteArray (g.Edges, fun e -> e.Write w)
             w.WriteMap (g.Colors, fun k v -> w.Write k; w.Write v)
+            w.Write g.OptionsLeft
+            w.WriteArray (Set.toArray g.OptionsUsed, w.Write)
 
     let withCancelationToken g t = { g with CancelationToken = Some t }
 
@@ -110,10 +117,12 @@ module Graph =
          Edges=edges;
          EdgeFilter=defaultFilter;
          Colors=Map.empty;
+         OptionsUsed=Set.empty;
+         OptionsLeft=0;
          AdjacentEdges=buildAdjacentEdges vertices edges;
          CancelationToken=None}
 
-    let create vertices edges: T =
+    let create vertices edges options: T =
         let sources = vertices |> Array.choose (fun v ->
             if Vertex.isSource v then Some (Vertex.id v) else None)
 
@@ -122,6 +131,8 @@ module Graph =
          Edges=edges;
          EdgeFilter=defaultFilter;
          Colors=Map.empty;
+         OptionsUsed=Set.empty;
+         OptionsLeft=if options then sources.Length else 0;
          AdjacentEdges=buildAdjacentEdges vertices edges;
          CancelationToken=None}
 
@@ -162,11 +173,26 @@ module Graph =
         | Some color -> color = punter
         | None -> false
 
-    let claimEdge ({Colors=cs} as g) punter eid: T =
+    let canBuy g edge: bool =
+        g.EdgeFilter edge &&
+        g.OptionsLeft > 0 &&
+        not (Set.contains (Edge.id edge) g.OptionsUsed)
+
+    let claimOptionEdge ({Colors=cs; Edges=es} as g) punter me eid: T =
         g.CancelationToken
             |> Option.map (fun t -> t.ThrowIfCancellationRequested ())
             |> ignore
-        {g with Colors=Map.add eid punter cs}
+        let isOption =
+            match edgeColor g es.[eid] with
+            | Some c -> c <> punter
+            | None -> false
+        let (optionsUsed, optionsLeft) =
+            if isOption
+            then (Set.add eid g.OptionsUsed, g.OptionsLeft - (if punter = me then 1 else 0))
+            else (g.OptionsUsed, g.OptionsLeft)
+        {g with Colors=Map.add eid punter cs; OptionsUsed=optionsUsed; OptionsLeft=optionsLeft}
+
+    let claimEdge g punter eid = claimOptionEdge g punter punter eid
 
     let claimedBy g punter: Edge.T seq =
         edges g |> Seq.filter (isClaimedBy punter g)
@@ -254,7 +280,7 @@ module Traversal =
                 let edges =
                     [|for edge in Graph.unclaimed graph do
                       if belongsTo edge target then yield edge|]
-                Some (Graph.create vertices edges)
+                Some (Graph.create vertices edges false)
         (* XXX by designed this would filter out chunks of the graph
                disconnected from the [sources]. *)
         Graph.sources graph |> Seq.choose cutout

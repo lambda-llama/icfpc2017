@@ -31,7 +31,7 @@ module StateTests =
                     rivers = [| { source = 0u; target = 1u } |]
                     mines = [| 0u; 1u |]
                 }
-            settings = { futures = true; splurges = false }
+            settings = { futures = true; splurges = false; options = false }
         }
 
         let state = initialState setup <| Map.ofList [("foo", "bar")]
