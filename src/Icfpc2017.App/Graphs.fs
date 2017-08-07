@@ -221,7 +221,6 @@ module Graph =
 module Traversal =
     let connectedComponents (graph: Graph.T): Graph.T seq =
         let nVertices = Graph.nVertices graph
-        let seen = Array.create nVertices false
         let components = Array.create nVertices -1
         let explore source =
             let work = new Stack<int>()
