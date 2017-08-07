@@ -134,7 +134,7 @@ module Graph =
 
     let vertex {Vertices=vs} vid: Vertex.T = vs.[vid]
     let private vertices {Vertices=vs} = vs
-    let private edges {Edges=es} = Array.toSeq es
+    let edges {Edges=es} = Array.toSeq es
 
     let sources {Sources=sources}: int seq = Array.toSeq sources
     let sinks {Sources=sources; Vertices=vs}: int seq =
@@ -304,11 +304,13 @@ module Traversal =
             if distances.[x] = -1 then
                 work.Enqueue x
                 distances.[x] <- dist
+//                printfn "enq dis[%d]=%d" x dist
 
         enqueueIfNeed source 0
 
         while work.Count <> 0 do
             let current = work.Dequeue () in
+//            printfn "tr %A" current 
             assert (distances.[current] <> -1)
             for next in Graph.adjacentEdges graph current |> Seq.filter pred |> Seq.map (fun e -> Edge.opposite e current) do
                 enqueueIfNeed next (distances.[current] + 1)

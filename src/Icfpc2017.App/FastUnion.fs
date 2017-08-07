@@ -47,3 +47,7 @@ let getUnion (uf: T) (key: int)=
 
 let IsSameComponent (uf: T) (u: int) (v: int)=
     uf.partition.find(u) = uf.partition.find(v)
+
+let IsVirginNode (dsu: T) (v: int) =
+    let un = getUnion dsu v
+    un.Sources.Length = 0 && un.Sites.Length = 1

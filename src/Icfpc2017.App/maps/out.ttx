@@ -1,0 +1,80 @@
+#mines seq [22; 27; 32; 37]
+#CC = 1
+#vertices [|38|] // 38
+#edges [|60|] // 60
+Step 0: gready
+Step 1: gready_heur2
+Step 2: gready
+Step 3: gready_heur2
+Step 4: gready
+Step 5: gready_heur2
+Step 6: gready
+Step 7: gready_heur2
+Step 8: gready
+Step 9: gready_heur2
+Step 10: gready
+Step 11: gready_heur2
+Step 12: gready
+Step 13: gready_heur2
+Step 14: gready
+Step 15: gready_heur2
+Step 16: gready
+Step 17: gready_heur2
+Step 18: gready
+Step 19: gready_heur2
+Step 20: gready
+Step 21: gready_heur2
+Step 22: gready
+Step 23: gready_heur2
+Step 24: gready
+Step 25: gready_heur2
+Step 26: gready
+Step 27: gready_heur2
+Step 28: gready
+Step 29: gready_heur2
+Step 30: gready
+Step 31: gready_heur2
+Step 32: gready
+Step 33: gready_heur2
+Step 34: gready
+Step 35: gready_heur2
+Step 36: gready
+Step 37: gready_heur2
+Step 38: gready
+Step 39: gready_heur2
+Step 40: gready
+Step 41: gready_heur2
+Step 42: gready
+Step 43: gready_heur2
+Step 44: gready
+Step 45: gready_heur2
+Step 46: gready
+Step 47: gready_heur2
+Step 48: gready
+Step 49: gready_heur2
+Promises 0
+Promises 0
+Promises 0
+Promises 0
+Step 50: gready
+Step 51: gready_heur2
+Promises 0
+Promises 0
+Promises 0
+Step 52: gready
+Step 53: gready_heur2
+Promises 0
+Promises 0
+Step 54: gready
+Step 55: gready_heur2
+Promises 0
+Promises 0
+Step 56: gready
+Step 57: gready_heur2
+Promises 0
+Step 58: gready
+Step 59: gready_heur2
+Promises 0
+Promises 0
+gready 1976
+gready_heur2 1082

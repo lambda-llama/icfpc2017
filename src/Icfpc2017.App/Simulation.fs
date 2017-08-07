@@ -44,9 +44,8 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
 let run mapPath =
     let map = System.IO.File.ReadAllText mapPath
     let competitors = [|
-        GreadyStrategy.greedyStrategy
         GreadyStrategy.greedyRandomStrategy
-        GreadyStrategy.greedyStrategyWithHeur
+        GreadyStrategy.greadyStrategyWithHeur2
     |]
     shuffle competitors
     let competitors = Array.toList competitors
