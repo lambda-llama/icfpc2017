@@ -109,7 +109,6 @@ let applyStrategyStep s step =
         match Graph.edgeColor s.Graph edge with
         | Some c -> c <> s.Me
         | None -> false
-    eprintf "OPTION: %A\n" isOption
     stopWatch.Stop()
     let usedFraction = float stopWatch.ElapsedMilliseconds / stepBudgetMs
     let (u, v) = Edge.ends edge
