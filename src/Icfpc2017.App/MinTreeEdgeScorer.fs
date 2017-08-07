@@ -5,10 +5,13 @@ open FastUnion
 
 let getCentreValue (sources: int[]) (uwe: UnionWithEdge) (dist: int[])  =
     let nVert = dist.Length
-    let compDist = Array.create nVert 9999999
+    let compDist = Array.create nVert 99999
     for i in 0..nVert-1 do
         let p = getUWEParent uwe i
-        compDist.[p] <- min compDist.[p] dist.[i]
+        let d = if dist.[i] = -1 
+                    then 99999
+                    else dist.[i]
+        compDist.[p] <- min compDist.[p] d
     let mutable sum = 0
     for i in sources do
         sum <- sum + compDist.[i]
