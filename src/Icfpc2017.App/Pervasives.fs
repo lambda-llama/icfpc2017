@@ -1,5 +1,6 @@
 module Pervasives
 
+open System
 open System.IO
 open System.Diagnostics
 
@@ -26,6 +27,16 @@ let pairwise xs =
     | [] | [_] -> List.rev acc
     | x::(y::_ as rest) -> go ((x, y)::acc) rest
     in go [] xs
+
+let rand = new Random()
+
+let swap (a: _[]) x y =
+    let tmp = a.[x]
+    a.[x] <- a.[y]
+    a.[y] <- tmp
+
+let shuffle a =
+    Array.iteri (fun i _ -> swap a i (rand.Next(i, Array.length a))) a
 
 type BinaryReader with
     member inline r.ReadArray(f: int -> 'a): 'a array =

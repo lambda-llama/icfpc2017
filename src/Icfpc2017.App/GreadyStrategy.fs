@@ -1,12 +1,14 @@
 module GreadyStrategy
 
+open System
+
 open Graphs
 open FastUnion
 open Union
 open MinTreeEdgeScorer
 
-let greadyStrategy: Strategy.T =
-    Strategy.stateless "gready" Map.empty (fun game ->
+let greedyStrategy: Strategy.T =
+    Strategy.stateless "greedy" Map.empty (fun game ->
         let graph = game.Graph
         let bfs = Traversal.shortestPaths graph
         let dsu = FastUnion.create graph game.Me
@@ -19,8 +21,8 @@ let greadyStrategy: Strategy.T =
         Graph.unclaimedOrCanBuy graph |> Seq.maxBy getScore, game.StrategyState
     )
 
-let greadyStrategyWithHeur: Strategy.T =
-    Strategy.stateless "gready_heur" Map.empty (fun game ->
+let greedyStrategyWithHeur: Strategy.T =
+    Strategy.stateless "greedyHeur" Map.empty (fun game ->
         let graph = game.Graph
         let bfs = Traversal.shortestPaths graph
         let dsu = FastUnion.create graph game.Me
@@ -36,4 +38,12 @@ let greadyStrategyWithHeur: Strategy.T =
         let bestCandidates = candidates |> Seq.filter (fun (a, b) -> b = maxGreedValue) |> Seq.map (fun (a, b)-> a)
         let winner = MinTreeEdgeScorer.GetBestEdge game.Me graph dsu bestCandidates
         winner, game.StrategyState
+    )
+
+let greedyRandomStrategy: Strategy.T =
+    let r = Random ()
+    Strategy.stateless "greedyRandom" Map.empty (fun game ->
+        if r.NextDouble () <= 0.5
+        then greedyStrategy.init game.Graph game
+        else greedyStrategyWithHeur.init game.Graph game
     )

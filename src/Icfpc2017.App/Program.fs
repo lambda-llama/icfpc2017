@@ -7,7 +7,7 @@ let main args =
     | ["--sim"; mapPath] -> Simulation.run mapPath; 0
     | port :: strategyName :: extra when Map.containsKey strategyName Strategies.all ->
         Online.run "punter.inf.ed.ac.uk" (int port) Strategies.all.[strategyName] extra; 0
-    | [] -> Offline.run GreadyStrategy.greadyStrategy; 0
+    | [] -> Offline.run GreadyStrategy.greedyRandomStrategy; 0
     | _ ->
         Strategies.all |> Map.toSeq |> Seq.map fst
             |> String.concat "|"

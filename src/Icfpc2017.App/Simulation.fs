@@ -4,6 +4,7 @@ open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 
 open Graphs
+open Pervasives
 
 let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Game.Color * string * (Game.State -> (Edge.T * Map<string, string>))) list) =
     let (me, name, step) = List.head punters
@@ -42,11 +43,14 @@ let simulate (map: ProtocolData.Map) (strats: Strategy.T list): int list =
 
 let run mapPath =
     let map = System.IO.File.ReadAllText mapPath
-    let competitors = [
-        GreadyStrategy.greadyStrategy
-        GreadyStrategy.greadyStrategyWithHeur
-        // Strategy.randomEdge
-    ]
-    let (scores: int list) = simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
+    let competitors = [|
+        GreadyStrategy.greedyStrategy
+        GreadyStrategy.greedyRandomStrategy
+        GreadyStrategy.greedyStrategyWithHeur
+    |]
+    shuffle competitors
+    let competitors = Array.toList competitors
+    let (scores: int list) =
+        simulate (JsonConvert.DeserializeObject<JObject>(map) |> ProtocolData.deserializeMap) competitors
     List.zip competitors scores
     |> List.iter (fun (c, s) ->  printf "%s %d\n" c.name s)
