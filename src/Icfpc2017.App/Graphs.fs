@@ -22,9 +22,9 @@ module Vertex =
             w.Write v.Id
 
     let create id isSource coords: T =
-        {Id=(if isSource then -id else id); Coords=coords}
+        {Id=(if isSource then -id - 1 else id); Coords=coords}
 
-    let id {Id=id} = abs id
+    let id {Id=id} = if id < 0 then -(id + 1) else id
     let isSource {Id=id} = id < 0
     let coords {Coords=coords} = coords
 
