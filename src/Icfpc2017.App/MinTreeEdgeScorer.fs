@@ -26,7 +26,6 @@ let GetBestEdge (me: Color) (graph: Graph.T) (uf: FastUnion.T) (edges: Edge.T se
     let rnd = System.Random()
     let randomCenters = [|for i in 0..100 do yield rnd.Next (Graph.nVertices graph)|] |> Array.distinct
     let canTraverse edge =
-        (* Graph.canBuy graph edge || *)
         Graph.isClaimedBy me graph edge ||
         not (Graph.isClaimed graph edge)
     let pathes = randomCenters |> Array.map (fun x-> Traversal.shortestPathWithPred graph x canTraverse)

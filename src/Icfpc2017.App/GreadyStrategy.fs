@@ -16,7 +16,7 @@ let greadyStrategy: Strategy.T =
             if FastUnion.IsSameComponent dsu v1 v2
             then 0
             else getScore (FastUnion.getUnion dsu v1) (FastUnion.getUnion dsu v2) bfs
-        Graph.unclaimed graph |> Seq.maxBy getScore, game.StrategyState
+        Graph.unclaimedOrCanBuy graph |> Seq.maxBy getScore, game.StrategyState
     )
 
 let greadyStrategyWithHeur: Strategy.T =
@@ -30,7 +30,7 @@ let greadyStrategyWithHeur: Strategy.T =
             if FastUnion.IsSameComponent dsu v1 v2
             then 0
             else getScore (FastUnion.getUnion dsu v1) (FastUnion.getUnion dsu v2) bfs
-        let candidates = Graph.unclaimed graph |> Seq.map (fun x -> (x, getScore x))
+        let candidates = Graph.unclaimedOrCanBuy graph |> Seq.map (fun x -> (x, getScore x))
         let maxGreedEdge = candidates |> Seq.maxBy snd
         let k, maxGreedValue = maxGreedEdge
         let bestCandidates = candidates |> Seq.filter (fun (a, b) -> b = maxGreedValue) |> Seq.map (fun (a, b)-> a)

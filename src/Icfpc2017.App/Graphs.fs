@@ -205,7 +205,7 @@ module Graph =
     let unclaimed g: Edge.T seq =
         edges g |> Seq.filter (isClaimed g >> not)
 
-    let unclaimedOrCanBy g: Edge.T seq =
+    let unclaimedOrCanBuy g: Edge.T seq =
         edges g |> Seq.filter (fun edge ->
             not (isClaimed g edge) || canBuy g edge)
 
