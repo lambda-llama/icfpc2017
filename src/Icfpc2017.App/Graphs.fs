@@ -77,8 +77,7 @@ module Graph =
         Sources: int array
         Edges: Edge.T array
         EdgeFilter: Edge.T -> bool
-        Colors: Map<int, Color>
-        OptionsUsed: Set<int>
+        Colors: Map<int, Color * Color>
         OptionsLeft: int
         AdjacentEdges: Edge.T array array
     } with
@@ -86,12 +85,11 @@ module Graph =
             let vertices = r.ReadArray (fun _ -> Vertex.T.Read r)
             let sources = r.ReadArray (fun _ -> r.ReadInt32 ())
             let edges = r.ReadArray (fun _ -> Edge.T.Read r)
-            let colors = r.ReadMap (fun _ -> (r.ReadInt32 (), r.ReadInt32 ()))
+            let colors = r.ReadMap (fun _ ->
+                (r.ReadInt32 (), (r.ReadInt32 (), r.ReadInt32 ())))
             let optionsLeft = r.ReadInt32()
-            let optionsUsed = r.ReadArray (fun _ -> r.ReadInt32 ()) |> Set.ofArray
             {Vertices=vertices; Sources=sources; Edges=edges;
-             EdgeFilter=defaultFilter; Colors=colors;
-             OptionsUsed=optionsUsed; OptionsLeft=optionsLeft;
+             EdgeFilter=defaultFilter; Colors=colors; OptionsLeft=optionsLeft;
              AdjacentEdges=buildAdjacentEdges vertices edges;
              CancelationToken=None}
 
@@ -100,9 +98,9 @@ module Graph =
             w.WriteArray (g.Vertices, fun v -> v.Write w)
             w.WriteArray (g.Sources, w.Write)
             w.WriteArray (g.Edges, fun e -> e.Write w)
-            w.WriteMap (g.Colors, fun k v -> w.Write k; w.Write v)
+            w.WriteMap (g.Colors, fun eid (c1, c2) ->
+                w.Write eid; w.Write c1; w.Write c2)
             w.Write g.OptionsLeft
-            w.WriteArray (Set.toArray g.OptionsUsed, w.Write)
 
     let withCancelationToken g t = { g with CancelationToken = Some t }
 
@@ -117,7 +115,6 @@ module Graph =
          Edges=edges;
          EdgeFilter=defaultFilter;
          Colors=Map.empty;
-         OptionsUsed=Set.empty;
          OptionsLeft=0;
          AdjacentEdges=buildAdjacentEdges vertices edges;
          CancelationToken=None}
@@ -131,7 +128,6 @@ module Graph =
          Edges=edges;
          EdgeFilter=defaultFilter;
          Colors=Map.empty;
-         OptionsUsed=Set.empty;
          OptionsLeft=if options then sources.Length else 0;
          AdjacentEdges=buildAdjacentEdges vertices edges;
          CancelationToken=None}
@@ -154,7 +150,7 @@ module Graph =
         let uv = Edge.create 0 uv |> Edge.ends
         Seq.find (fun e -> Edge.ends e = uv) (edges g) |> Edge.id
 
-    let edgeColor {Colors=cs; EdgeFilter=ef} edge =
+    let edgeColors {Colors=cs; EdgeFilter=ef} edge =
         if ef edge
         then cs.TryFind (Edge.id edge)
         else None
@@ -169,20 +165,23 @@ module Graph =
         ef edge && cs.ContainsKey (Edge.id edge)
 
     let isClaimedBy punter g edge: bool =
-        match edgeColor g edge with
-        | Some color -> color = punter
+        match edgeColors g edge with
+        | Some (c1, c2) -> c1 = punter || c2 = punter
         | None -> false
 
-    let isOptionFor punter g edge: bool =
-        match edgeColor g edge with
-            | Some c -> c <> punter
+    let private isBought g edge =
+        match edgeColors g edge with
+            | Some (c1, c2) -> c1 <> c2
             | None -> false
 
-    let canBuy punter g edge: bool =
+    let isOptionFor punter g edge: bool =
+        isClaimed g edge && not (isBought g edge || isClaimedBy punter g edge)
+
+    (* XXX this is *I* can buy. *)
+    let canBuy g edge: bool =
         g.EdgeFilter edge &&
         g.OptionsLeft > 0 &&
-        not (Set.contains (Edge.id edge) g.OptionsUsed) &&
-        isOptionFor punter g edge
+        isClaimed g edge && not (isBought g edge)
 
     let claimOptionEdge ({Colors=cs; Edges=es} as g) punter me eid: T =
         g.CancelationToken
@@ -190,22 +189,28 @@ module Graph =
             |> ignore
         if isOptionFor punter g es.[eid]
         then
-            {g with OptionsUsed=Set.add eid g.OptionsUsed;
+            let (other, _) = Map.find eid cs
+            {g with Colors=Map.add eid (other, punter) cs;
                     OptionsLeft=g.OptionsLeft - (if punter = me then 1 else 0)}
         else
-            {g with Colors=Map.add eid punter cs}
+            {g with Colors=Map.add eid (punter, punter) cs}
 
     let claimEdge g punter eid = claimOptionEdge g punter punter eid
 
     let claimedBy g punter: Edge.T seq =
         edges g |> Seq.filter (isClaimedBy punter g)
 
+    (* XXX use only for [Game.Me]. *)
+    let claimedByOrCanBuy g punter: Edge.T seq =
+        edges g |> Seq.filter (fun edge ->
+            isClaimedBy punter g edge || canBuy g edge)
+
     let unclaimed g: Edge.T seq =
         edges g |> Seq.filter (isClaimed g >> not)
 
-    let unclaimedOrCanBy g punter: Edge.T seq =
+    let unclaimedOrCanBy g: Edge.T seq =
         edges g |> Seq.filter (fun edge ->
-            not (isClaimed g edge) || canBuy punter g edge)
+            not (isClaimed g edge) || canBuy g edge)
 
     (** Focus on a subgraph of a specific punter. *)
     let subgraph (g: T) (punter: Color): T =
@@ -241,9 +246,10 @@ module Graph =
         let renderEdge (e: Edge.T) =
             let (u, v) = Edge.ends e
             let (color: string, width: int) =
-                match edgeColor graph e with
-                | Some(idx) when idx = we -> ("red", 3)
-                | Some(idx) -> (Array.get colors (int idx), 3)
+                (* TODO: multiple colors?.. *)
+                match edgeColors graph e with
+                | Some(c1, c2) when c1 = we || c2 = we -> ("red", 3)
+                | Some(c1, c2) -> (Array.get colors (int c1), 3)
                 | None -> ("black", 1)
             in sprintf "  %d -- %d [color=\"%s\", penwidth=\"%d\"];" u v color width
         in

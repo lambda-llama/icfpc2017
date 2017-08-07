@@ -29,7 +29,7 @@ module GraphTests =
         let edge = Graph.unclaimed graph |> Seq.head
         Assert.False (Graph.isClaimed graph edge)
         Assert.False (Graph.isClaimedBy 42 graph edge)
-        Assert.That (Graph.edgeColor graph edge, Is.EqualTo None)
+        Assert.That (Graph.edgeColors graph edge, Is.EqualTo None)
 
         let graph2 = Graph.claimEdge graph 42 (Edge.id edge)
         Assert.True (Graph.isClaimed graph2 edge)

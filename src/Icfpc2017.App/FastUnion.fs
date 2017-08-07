@@ -29,7 +29,7 @@ let getComponentVerts (graph: Graph.T) (part: UnionFind.Partition) (comp: int) =
 
 let create (graph: Graph.T) (me: Color)=
     let uf = UnionFind.Partition (Graph.nVertices graph)
-    for e in Graph.claimedBy graph me do
+    for e in Graph.claimedByOrCanBuy graph me do
         uf.union_by_rank (Edge.ends e) |> ignore
     let comps = {0..Graph.nVertices graph - 1} |> Seq.map uf.find |> Seq.distinct
     let unions = comps |>
