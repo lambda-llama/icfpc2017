@@ -15,6 +15,7 @@
     <Compile Include="FastUnion.fs" />
     <Compile Include="MinTreeEdgeScorer.fs" />
     <Compile Include="Strategy.fs" />
+    <!-- <Compile Include="RandomTraveller.fs" /> -->
     <Compile Include="BruteForceStrategy.fs" />
     <Compile Include="GrowFromMinesStrategy.fs" />
     <Compile Include="MinimaxStrategy.fs" />
