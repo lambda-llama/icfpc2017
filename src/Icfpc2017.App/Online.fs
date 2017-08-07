@@ -22,11 +22,10 @@ let play (p: Pipe.T) punter (strategy: Strategy.T) =
                 let vIndex = currState.VIndex
                 let (edge, newStrategyState) =
                     time (sprintf "Strategy[%s].Step" strategy.name) (fun () -> step nextState)
-                let isOption = Graph.isOptionFor nextState.Me nextState.Graph edge
                 let (u, v) = Edge.ends edge
                 let (eu, ev) = (vIndex.e(u), vIndex.e(v))
                 let nextMove =
-                    if isOption
+                    if Graph.canBuy nextState.Graph edge
                     then ProtocolData.Option {punter=nextState.Me; source=eu; target=ev}
                     else ProtocolData.Claim {punter=nextState.Me; source=eu; target=ev}
                 Pipe.write p (ProtocolData.Move {move=nextMove; state=None})

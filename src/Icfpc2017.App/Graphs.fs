@@ -174,20 +174,17 @@ module Graph =
             | Some (c1, c2) -> c1 <> c2
             | None -> false
 
-    let isOptionFor punter g edge: bool =
-        isClaimed g edge && not (isBought g edge || isClaimedBy punter g edge)
-
     (* XXX this is *I* can buy. *)
     let canBuy g edge: bool =
         g.EdgeFilter edge &&
         g.OptionsLeft > 0 &&
         isClaimed g edge && not (isBought g edge)
 
-    let claimOptionEdge ({Colors=cs; Edges=es} as g) punter me eid: T =
+    let claimOptionEdge ({Colors=cs; Edges=es} as g) punter me isOption eid: T =
         g.CancelationToken
             |> Option.map (fun t -> t.ThrowIfCancellationRequested ())
             |> ignore
-        if isOptionFor punter g es.[eid]
+        if isOption
         then
             let (other, _) = Map.find eid cs
             {g with Colors=Map.add eid (other, punter) cs;
@@ -195,7 +192,7 @@ module Graph =
         else
             {g with Colors=Map.add eid (punter, punter) cs}
 
-    let claimEdge g punter eid = claimOptionEdge g punter punter eid
+    let claimEdge g punter eid = claimOptionEdge g punter punter false eid
 
     let claimedBy g punter: Edge.T seq =
         edges g |> Seq.filter (isClaimedBy punter g)

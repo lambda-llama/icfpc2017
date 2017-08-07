@@ -105,28 +105,27 @@ let private stepBudgetMs = 900.0
 let applyStrategyStep s step =
     let stopWatch = System.Diagnostics.Stopwatch.StartNew()
     let (edge, newStrategyState) = step s
-    let isOption = Graph.isOptionFor s.Me s.Graph edge
     stopWatch.Stop()
     let usedFraction = float stopWatch.ElapsedMilliseconds / stepBudgetMs
     let (u, v) = Edge.ends edge
     let vIndex = s.VIndex
     let (eu, ev) = (vIndex.e(u), vIndex.e(v))
     let newState = { s with StrategyState = newStrategyState; TimeUsedLastMoveFraction = usedFraction }
-    ((eu, ev), isOption, newState)
+    ((eu, ev), Graph.canBuy s.Graph edge, newState)
 
-let applyClaim s (claim: ProtocolData.Claim) =
+let applyClaim s (claim: ProtocolData.Claim) isOption =
     let eid = (s.VIndex.i(claim.source), s.VIndex.i(claim.target))
               |> Graph.edgeId s.Graph
-    {s with Graph=Graph.claimOptionEdge s.Graph claim.punter s.Me eid}
+    {s with Graph=Graph.claimOptionEdge s.Graph claim.punter s.Me isOption eid}
 
 let applySplurge s (splurge: ProtocolData.Splurge) =
     Array.toList splurge.route |> pairwise |> List.fold (fun s (eu, ev) ->
-        applyClaim s {punter=splurge.punter; source=eu; target=ev}) s
+        applyClaim s {punter=splurge.punter; source=eu; target=ev} false) s
 
 let applyMoves = Array.fold (fun s move ->
     match move with
-    | ProtocolData.Claim claim
-    | ProtocolData.Option claim -> applyClaim s claim
+    | ProtocolData.Claim claim -> applyClaim s claim false
+    | ProtocolData.Option claim -> applyClaim s claim true
     | ProtocolData.Splurge splurge -> applySplurge s splurge
     | ProtocolData.Pass _ -> s)
 

@@ -12,7 +12,7 @@ let rec private simulateSteps nStep totalSteps (game: Game.State) (punters: (Gam
         printf "Step %d: %s\n" nStep name
         let ((eu, ev), isOption, nextState) = Game.applyStrategyStep {game with Me=me} step
         let nextState =
-            Game.applyClaim nextState {punter=me; source=eu; target=ev}
+            Game.applyClaim nextState {punter=me; source=eu; target=ev} isOption
         simulateSteps (nStep + 1) totalSteps nextState (List.append (List.tail punters) [(me, name, step)])
 
 
