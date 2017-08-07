@@ -173,24 +173,27 @@ module Graph =
         | Some color -> color = punter
         | None -> false
 
-    let canBuy g edge: bool =
+    let isOptionFor punter g edge: bool =
+        match edgeColor g edge with
+            | Some c -> c <> punter
+            | None -> false
+
+    let canBuy punter g edge: bool =
         g.EdgeFilter edge &&
         g.OptionsLeft > 0 &&
-        not (Set.contains (Edge.id edge) g.OptionsUsed)
+        not (Set.contains (Edge.id edge) g.OptionsUsed) &&
+        isOptionFor punter g edge
 
     let claimOptionEdge ({Colors=cs; Edges=es} as g) punter me eid: T =
         g.CancelationToken
             |> Option.map (fun t -> t.ThrowIfCancellationRequested ())
             |> ignore
-        let isOption =
-            match edgeColor g es.[eid] with
-            | Some c -> c <> punter
-            | None -> false
-        let (optionsUsed, optionsLeft) =
-            if isOption
-            then (Set.add eid g.OptionsUsed, g.OptionsLeft - (if punter = me then 1 else 0))
-            else (g.OptionsUsed, g.OptionsLeft)
-        {g with Colors=Map.add eid punter cs; OptionsUsed=optionsUsed; OptionsLeft=optionsLeft}
+        if isOptionFor punter g es.[eid]
+        then
+            {g with OptionsUsed=Set.add eid g.OptionsUsed;
+                    OptionsLeft=g.OptionsLeft - (if punter = me then 1 else 0)}
+        else
+            {g with Colors=Map.add eid punter cs}
 
     let claimEdge g punter eid = claimOptionEdge g punter punter eid
 
@@ -199,6 +202,10 @@ module Graph =
 
     let unclaimed g: Edge.T seq =
         edges g |> Seq.filter (isClaimed g >> not)
+
+    let unclaimedOrCanBy g punter: Edge.T seq =
+        edges g |> Seq.filter (fun edge ->
+            not (isClaimed g edge) || canBuy punter g edge)
 
     (** Focus on a subgraph of a specific punter. *)
     let subgraph (g: T) (punter: Color): T =

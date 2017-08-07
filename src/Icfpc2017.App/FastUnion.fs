@@ -14,10 +14,10 @@ type UnionWithEdge = {
     P2: int
 }
 
-let createUnionWithEdge (fastUnion: T) (v1: int) (v2: int) = 
+let createUnionWithEdge (fastUnion: T) (v1: int) (v2: int) =
     { FastUnion = fastUnion; P1 = fastUnion.partition.find(v1); P2 = fastUnion.partition.find(v2) }
- 
-let getUWEParent (uwe: UnionWithEdge) (v: int) = 
+
+let getUWEParent (uwe: UnionWithEdge) (v: int) =
     let originalParent = uwe.FastUnion.partition.find(v)
     if originalParent = uwe.P2
     then uwe.P1
@@ -30,8 +30,8 @@ let getComponentVerts (graph: Graph.T) (part: UnionFind.Partition) (comp: int) =
 let create (graph: Graph.T) (me: Color)=
     let uf = UnionFind.Partition (Graph.nVertices graph)
     for e in Graph.claimedBy graph me do
-        uf.union_by_rank (Edge.ends e)
-    let comps = [|0..Graph.nVertices graph - 1|] |> Array.map (fun x -> uf.find(x)) |> Seq.distinct
+        uf.union_by_rank (Edge.ends e) |> ignore
+    let comps = {0..Graph.nVertices graph - 1} |> Seq.map uf.find |> Seq.distinct
     let unions = comps |>
                     Seq.map (fun comp->
                         (comp,{ Sources = getComponentVerts graph uf comp |>

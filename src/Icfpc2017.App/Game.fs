@@ -105,10 +105,7 @@ let private stepBudgetMs = 900.0
 let applyStrategyStep s step =
     let stopWatch = System.Diagnostics.Stopwatch.StartNew()
     let (edge, newStrategyState) = step s
-    let isOption =
-        match Graph.edgeColor s.Graph edge with
-        | Some c -> c <> s.Me
-        | None -> false
+    let isOption = Graph.isOptionFor s.Me s.Graph edge
     stopWatch.Stop()
     let usedFraction = float stopWatch.ElapsedMilliseconds / stepBudgetMs
     let (u, v) = Edge.ends edge
