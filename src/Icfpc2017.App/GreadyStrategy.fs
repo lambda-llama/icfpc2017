@@ -48,7 +48,7 @@ let greedyRandomStrategy: Strategy.T =
         else greedyStrategyWithHeur.init game.Graph game
     )
 
-let isMinesConnectable (graph: Graph.T) (me:Color) (dsu: FastUnion.T) (mines: int seq) = 
+let isMinesConnectable (graph: Graph.T) (me:Color) (dsu: FastUnion.T) (mines: int seq) =
     let canTraverse edge = Graph.isClaimedBy me graph edge || not (Graph.isClaimed graph edge)
     mines |>
     Seq.exists (fun m ->
@@ -84,7 +84,7 @@ let getPromises (graph: Graph.T) (dsu: FastUnion.T) (bfs: Map<int ,int array>) (
 //    printfn "+++++++ %A +++++" dist
 //    printAllInfo graph dsu bfs dist start
     let mutable sum = 0
-    let mines = getUnion dsu start 
+    let mines = getUnion dsu start
     for m in mines.Sources do
         for j in 0..Graph.nVertices graph - 1 do
             if dist.[j] <> -1
@@ -93,12 +93,12 @@ let getPromises (graph: Graph.T) (dsu: FastUnion.T) (bfs: Map<int ,int array>) (
     sum
 
 
-let greadyStrategyWithHeur2: Strategy.T =
-    Strategy.stateless "gready_heur2" Map.empty (fun game ->
+let greedyStrategyWithHeur2: Strategy.T =
+    Strategy.stateless "greedyHeur2" Map.empty (fun game ->
         let graph = game.Graph
         let bfs = Traversal.shortestPaths graph
         let dsu = FastUnion.create graph game.Me
-        
+
         let getScore (edge: Edge.T) =
             let v1, v2 = Edge.ends edge
             if FastUnion.IsSameComponent dsu v1 v2
@@ -110,14 +110,14 @@ let greadyStrategyWithHeur2: Strategy.T =
         //TODO: add options here
         let bestCandidates = candidates |> Seq.filter (fun (a, b) -> b = maxGreedValue) |> Seq.map (fun (a, b)-> a)
         if not (isMinesConnectable graph game.Me dsu (Graph.sources graph))
-            then 
+            then
                 bestCandidates |>
                 Seq.map (fun e ->
                             let u,v = Edge.ends e
                             let startForTraversal = if IsVirginNode dsu u then u else v
                             (e, startForTraversal)
                 ) |>
-                Seq.maxBy (fun (e, s) -> 
+                Seq.maxBy (fun (e, s) ->
                             let p = getPromises graph dsu bfs s
                             p) |>
                 (fun (e,s)-> e) , game.StrategyState

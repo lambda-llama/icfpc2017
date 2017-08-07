@@ -116,6 +116,8 @@ let applyStrategyStep s step =
 let applyClaim s (claim: ProtocolData.Claim) isOption =
     let eid = (s.VIndex.i(claim.source), s.VIndex.i(claim.target))
               |> Graph.edgeId s.Graph
+    let edge = Graph.edge s.Graph eid
+    let isOption = Graph.isClaimed s.Graph edge && not (Graph.isBought s.Graph edge)
     {s with Graph=Graph.claimOptionEdge s.Graph claim.punter s.Me isOption eid}
 
 let applySplurge s (splurge: ProtocolData.Splurge) =

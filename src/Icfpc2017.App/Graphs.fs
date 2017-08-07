@@ -134,6 +134,7 @@ module Graph =
 
     let vertex {Vertices=vs} vid: Vertex.T = vs.[vid]
     let private vertices {Vertices=vs} = vs
+    let edge {Edges=es} eid = es.[eid]
     let edges {Edges=es} = Array.toSeq es
 
     let sources {Sources=sources}: int seq = Array.toSeq sources
@@ -169,7 +170,7 @@ module Graph =
         | Some (c1, c2) -> c1 = punter || c2 = punter
         | None -> false
 
-    let private isBought g edge =
+    let isBought g edge =
         match edgeColors g edge with
             | Some (c1, c2) -> c1 <> c2
             | None -> false
@@ -310,7 +311,7 @@ module Traversal =
 
         while work.Count <> 0 do
             let current = work.Dequeue () in
-//            printfn "tr %A" current 
+//            printfn "tr %A" current
             assert (distances.[current] <> -1)
             for next in Graph.adjacentEdges graph current |> Seq.filter pred |> Seq.map (fun e -> Edge.opposite e current) do
                 enqueueIfNeed next (distances.[current] + 1)

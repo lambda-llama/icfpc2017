@@ -45,7 +45,8 @@ let run mapPath =
     let map = System.IO.File.ReadAllText mapPath
     let competitors = [|
         GreadyStrategy.greedyRandomStrategy
-        GreadyStrategy.greadyStrategyWithHeur2
+        GreadyStrategy.greedyStrategy
+        GreadyStrategy.greedyStrategyWithHeur2
     |]
     shuffle competitors
     let competitors = Array.toList competitors

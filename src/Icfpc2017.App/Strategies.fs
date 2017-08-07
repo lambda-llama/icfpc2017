@@ -17,6 +17,7 @@ let all =
      (minimax2.name, minimax2);
      (greedyStrategy.name, greedyStrategy);
      (greedyStrategyWithHeur.name, greedyStrategyWithHeur);
+     (greedyStrategyWithHeur2.name, greedyStrategyWithHeur2);
      (greedyRandomStrategy.name, greedyRandomStrategy);
      (mixedStrategy.name, mixedStrategy)
      (combinedForce.name, combinedForce)
