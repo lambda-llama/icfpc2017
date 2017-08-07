@@ -104,7 +104,7 @@ let greadyStrategyWithHeur2: Strategy.T =
             if FastUnion.IsSameComponent dsu v1 v2
             then 0
             else getScore (FastUnion.getUnion dsu v1) (FastUnion.getUnion dsu v2) bfs
-        let candidates = Graph.unclaimed graph |> Seq.map (fun x-> (x, getScore x))
+        let candidates = Graph.unclaimedOrCanBuy graph |> Seq.map (fun x -> (x, getScore x))
         let maxGreedEdge = candidates |> Seq.maxBy (fun (a, b) -> b)
         let k, maxGreedValue = maxGreedEdge
         //TODO: add options here
