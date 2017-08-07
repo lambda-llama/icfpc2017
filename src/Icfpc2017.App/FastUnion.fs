@@ -27,7 +27,7 @@ let getComponentVerts (graph: Graph.T) (part: UnionFind.Partition) (comp: int) =
     [|0..Graph.nVertices graph|] |>
     Array.filter (fun x-> part.find(x) = comp)
 
-let create (graph: Graph.T) (me: Color)=
+let create (graph: Graph.T) (me: Color) =
     let uf = UnionFind.Partition (Graph.nVertices graph)
     for e in Graph.claimedBy graph me do
         uf.union_by_rank (Edge.ends e) |> ignore

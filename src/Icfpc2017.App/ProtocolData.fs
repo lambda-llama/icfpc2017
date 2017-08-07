@@ -194,9 +194,9 @@ let serializeSetupOut (s : SetupOut) : JObject =
           JProperty("ready" , s.ready),
           JProperty("futures", serializeArray s.futures serializeRiver))
 
-let serializeClaim (c : Claim) : JObject =
+let serializeClaim tag (c : Claim) : JObject =
     JObject(
-        JProperty("claim",
+        JProperty(tag,
             JObject(
                 JProperty("punter", c.punter),
                 JProperty("source", c.source),
@@ -218,7 +218,8 @@ let serializeSplurge (s : Splurge) : JObject =
 
 let serializeMove (m : Move) : JObject =
     match m with
-    | Claim claim | Option claim -> serializeClaim claim
+    | Claim claim -> serializeClaim "claim" claim
+    | Option claim -> serializeClaim "option" claim
     | Pass pass -> serializePass pass
     | Splurge splurge -> serializeSplurge splurge
 
@@ -326,7 +327,7 @@ let deserializeSettings (o : JObject) =
         let splurges =
             not (isNull o.["splurges"]) && o.["splurges"].ToObject<bool>()
         let options =
-            not (isNull o.["splurges"]) && o.["splurges"].ToObject<bool>()
+            not (isNull o.["options"]) && o.["options"].ToObject<bool>()
         {futures=futures; splurges=splurges; options=options}
 
 let deserializeState (o : JObject) =
